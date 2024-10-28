@@ -3,11 +3,15 @@
     <div class="bg-white rounded-lg shadow-xl p-6 w-full">
       <h1 class="text-3xl font-bold text-center mb-6">MIDI Piano</h1>
 
+      <MIDIUpload @midiParsed="handleMIDIParsed" />
+
       <PianoKeys :pressed-keys="pressedKeys" />
 
       <p class="mt-4 text-center text-gray-600">
         This virtual piano visualizes notes from a MIDI file input.
       </p>
+
+      <MIDIUpload />
       <button @click="play">Play MIDI!</button>
     </div>
   </div>
@@ -16,10 +20,13 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import PianoKeys from "./PianoKeys.vue";
+import MIDIUpload from "./MIDIUpload.vue";
 
 const audioContext = new window.AudioContext();
 
 const pressedKeys = ref<string[]>([]);
+
+const midiEvents = ref<{ time: number; note: string; type: 'noteOn' | 'noteOff' }[]>([]);
 
 const noteToFrequency = (noteId: string): number => {
   const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
