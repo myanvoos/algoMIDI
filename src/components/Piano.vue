@@ -42,6 +42,7 @@ const grandPianoSampler = new Tone.Sampler({
   },
   release: 1,
   baseUrl: "/samples/piano/",
+
   onload: () => {
     console.log("Sampler loaded successfully");
     samplerLoaded.value = true;
@@ -49,10 +50,9 @@ const grandPianoSampler = new Tone.Sampler({
 }).toDestination();
 
 const keyColors = ref<{ [key: string]: string }>({});
-
 const pressedKeys = ref<Set<string>>(new Set());
-
 const midiEvents = ref<MidiEvent[]>([]);
+let midiPart: Tone.Part | null = null;
 
 const handleMIDIParsed = (events: MidiEvent[]): void => {
   midiEvents.value = events;
@@ -97,15 +97,20 @@ const play = async (): Promise<void> => {
     Tone.getTransport().cancel();
     Tone.getTransport().stop();
 
-    midiEvents.value.forEach((event) => {
-      Tone.getTransport().schedule(() => {
-        if (event.type === 'noteOn') {
-          playNote(event.note);
-        } else if (event.type === 'noteOff') {
-          stopNote(event.note);
-        }
-      }, event.time);
-    });
+    if (midiPart) {
+      midiPart.dispose();
+      midiPart = null;
+    }
+
+    midiPart = new Tone.Part((time, event: MidiEvent) => {
+      if (event.type === 'noteOn') {
+        Tone.getTransport().scheduleOnce(() => playNote(event.note), time);
+      } else if (event.type === 'noteOff') {
+        Tone.getTransport().scheduleOnce(() => stopNote(event.note), time);
+      }
+    }, midiEvents.value).start(0);
+
+    Tone.getTransport().bpm.value = 120;
 
     Tone.getTransport().start();
   } catch (error) {
@@ -119,7 +124,10 @@ onMounted(() => {
   return () => {
     Tone.getTransport().stop();
     Tone.getTransport().cancel();
-    grandPianoSampler.dispose();
+    if (midiPart) {
+      midiPart.dispose();
+      midiPart = null;
+    }
   };
 });
 </script>

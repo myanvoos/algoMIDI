@@ -51,7 +51,6 @@ const handleFileUpload = (event: Event): void => {
 
         midi.tracks.forEach(track => {
 
-
           const trackName = track.name || `Track ${midi.tracks.indexOf(track)}`;
           const channel = track.channel;
 

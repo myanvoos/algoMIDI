@@ -90,11 +90,7 @@ function getKeyClass(noteId: string): string {
 }
 
 .white-key.piano-active {
-  background-color: lightgreen;
-}
-
-.white-key.drum-active {
-  background-color: lightcoral;
+  background-color: lightskyblue;
 }
 
 .black-key.active {
@@ -102,11 +98,7 @@ function getKeyClass(noteId: string): string {
 }
 
 .black-key.piano-active {
-  background-color: green;
-}
-
-.black-key.drum-active {
-  background-color: red;
+  background-color: lightblue;
 }
 
 .black-key {
