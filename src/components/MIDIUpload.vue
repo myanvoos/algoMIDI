@@ -26,6 +26,7 @@ const handleFileUpload = (event: Event): void => {
   if (!target.files || target.files.length === 0) return;
 
   const file = target.files[0];
+  console.log("File uploaded:", file);
   const reader = new FileReader();
 
   reader.onload = async (e) => {
@@ -33,6 +34,8 @@ const handleFileUpload = (event: Event): void => {
     if (arrayBuffer && typeof arrayBuffer !== 'string') {
       try {
         const midi = new Tone.Midi(arrayBuffer as ArrayBuffer);
+        console.log("Midi:", midi);
+
         const midiEvents: { time: number; note: string; type: 'noteOn' | 'noteOff' }[] = [];
 
         midi.tracks.forEach(track => {

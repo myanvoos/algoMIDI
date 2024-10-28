@@ -11,7 +11,6 @@
         This virtual piano visualizes notes from a MIDI file input.
       </p>
 
-      <MIDIUpload />
       <button @click="play">Play MIDI!</button>
     </div>
   </div>
@@ -21,6 +20,7 @@
 import { ref } from 'vue';
 import PianoKeys from "./PianoKeys.vue";
 import MIDIUpload from "./MIDIUpload.vue";
+import * as Tone from 'tone';
 
 const audioContext = new window.AudioContext();
 
@@ -47,21 +47,15 @@ const noteToFrequency = (noteId: string): number => {
 };
 
 const playNote = (note: string): void => {
-  const frequency = noteToFrequency(note);
-  const oscillator = audioContext.createOscillator();
-  const gainNode = audioContext.createGain();
+  const now = Tone.now();
+  const frequency = noteToFrequency(noteId);
 
-  oscillator.type = 'sine';
-  oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-
-  gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
-  gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5);
+  const oscillator = new Tone.Oscillator(frequency, 'sine').toDestination();
+  const gainNode = new Tone.Gain(0.5).toDestination();
 
   oscillator.connect(gainNode);
-  gainNode.connect(audioContext.destination);
-
-  oscillator.start();
-  oscillator.stop(audioContext.currentTime + 1);
+  oscillator.start(now);
+  oscillator.stop(now + 1);
 
   if (!pressedKeys.value.includes(note)) {
     pressedKeys.value = [...pressedKeys.value, note];
@@ -72,7 +66,11 @@ const playNote = (note: string): void => {
   }, 350); // 0.35 seconds
 };
 
+const handleMIDIParsed = (events: { time: number; note: string; type: 'noteOn' | 'noteOff' }[]): void => {
+  midiEvents.value = events;
+}
 
+// DEBUG
 const simulateMidiInput = (): void => {
   const midiSequence: { noteId: string; delay: number }[] = [
     { noteId: 'C4', delay: 0 },
@@ -94,7 +92,21 @@ const simulateMidiInput = (): void => {
   });
 };
 
-const play = (): void => {
-  simulateMidiInput();
+const play = async (): Promise<void> => {
+  await Tone.start();
+
+  Tone.getTransport().cancel();
+  Tone.getTransport().stop();
+
+  midiEvents.value.forEach(event => {
+    if (event.type === 'noteOn') {
+      Tone.getTransport().scheduleOnce(() => {
+        playNote(event.note);
+      }, event.time / 1000);
+    }
+    // TODO: noteOff
+  })
+
+  Tone.getTransport().start()
 }
 </script>
