@@ -4,13 +4,13 @@
       <h1 class="text-3xl font-bold text-center mb-6">MIDI Piano</h1>
       <div class="relative h-64 bg-gray-200 rounded-lg overflow-hidden">
         <div
-            v-for="note in notes"
-            :key="note.key"
+            v-for="note in fullKeyboard"
+            :id="note.id"
             :class="['absolute',
-                      note.isSharp ? 'bg-gray-800 h-2/3 w-10 z-10' : 'bg-white h-full w-16',
+                      note.baseNote.isSharp ? 'bg-gray-800 h-2/3 w-10 z-10' : 'bg-white h-full w-16',
                       'border border-gray-300 rounded-b-lg transition-colors duration-100',
-                      pressedKeys.includes(note.key) ? (note.isSharp ? 'bg-gray-600' : 'bg-blue-100') : '']"
-            :style="{ left: `${note.position}%` }">
+                      pressedKeys.includes(note.baseNote.key) ? (note.baseNote.isSharp ? 'bg-gray-600' : 'bg-blue-100') : '']"
+            :style="{ left: `${note.baseNote.position}%` }">
         </div>
       </div>
       <p class="mt-4 text-center text-gray-600">
@@ -23,7 +23,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { notes } from './PianoKeys.vue';
+import { fullKeyboard } from '../data/keyboardData.js';
 
 const audioContext = new window.AudioContext();
 
