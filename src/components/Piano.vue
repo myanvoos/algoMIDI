@@ -1,14 +1,14 @@
 <!-- Piano.vue -->
 <template>
-  <div class="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-    <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-4xl">
+  <div class="min-h-screen flex items-center justify-center p-4">
+    <div class="bg-gray-700 rounded-lg shadow-xl p-6 w-fit">
       <h1 class="text-3xl font-bold text-center mb-6">MIDI Piano</h1>
 
       <MIDIUpload @midiParsed="handleMIDIParsed" />
 
       <PianoKeys :pressed-keys="pressedKeys" :key-colors="keyColors" />
 
-      <p class="mt-4 text-center text-gray-600">
+      <p class="mt-4 text-center text-gray-200">
         This virtual piano visualizes notes from a MIDI file input.
       </p>
 
