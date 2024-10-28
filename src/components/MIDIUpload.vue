@@ -22,6 +22,7 @@ interface MidiEvent {
   time: number;
   note: string;
   type: 'noteOn' | 'noteOff';
+  instrument: number,
 }
 
 
@@ -58,6 +59,9 @@ const handleFileUpload = (event: Event): void => {
         const midiEvents: MidiEvent[] = [];
 
         midi.tracks.forEach(track => {
+          const program = track.instrument.number || 0;
+          console.log(`Track Instrument Program: ${program} (${track.instrument.name})`)
+
           track.notes.forEach(note => {
             const adjustedNoteName = adjustNoteOctave(note.name, 0);
 
@@ -65,12 +69,14 @@ const handleFileUpload = (event: Event): void => {
               time: note.time,
               note: adjustedNoteName,
               type: 'noteOn',
+              instrument: program
             });
 
             midiEvents.push({
               time: note.time + note.duration,
               note: adjustedNoteName,
               type: 'noteOff',
+              instrument: program
             });
           });
         });
