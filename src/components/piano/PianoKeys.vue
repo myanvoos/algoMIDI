@@ -4,13 +4,13 @@
     <div
         v-for="(note, index) in whiteKeys"
         :key="index"
-        :class="['white-key', getKeyClass(note.id)]"
+        :class="['white-key', pressedKeys.has(note.id) ? 'active' : '']"
     ></div>
 
     <div
         v-for="(note, index) in blackKeys"
         :key="index"
-        :class="['black-key', getKeyClass(note.id)]"
+        :class="['black-key', pressedKeys.has(note.id) ? 'active' : '']"
         :style="{ left: `${getBlackKeyPosition(index)}%` }"
     ></div>
 
@@ -23,7 +23,6 @@ import {computed} from "vue";
 
 const props = defineProps<{
   pressedKeys: Set<string>;
-  keyColors: { [key: string]: string };
 }>();
 
 
@@ -55,13 +54,6 @@ const getBlackKeyPosition = (index: number): number => {
   return 0;
 }
 
-function getKeyClass(noteId: string): string {
-  if (props.pressedKeys.has(noteId)) {
-    return props.keyColors[noteId] || 'active';
-  }
-  return '';
-}
-
 </script>
 
 <style scoped>
@@ -85,18 +77,10 @@ function getKeyClass(noteId: string): string {
 }
 
 .white-key.active {
-  background-color: lightblue;
-}
-
-.white-key.piano-active {
   background-color: lightskyblue;
 }
 
 .black-key.active {
-  background-color: #3b82f6;
-}
-
-.black-key.piano-active {
   background-color: lightblue;
 }
 

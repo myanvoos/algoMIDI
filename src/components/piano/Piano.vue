@@ -2,7 +2,7 @@
 <template>
   <div class="min-h-screen flex items-center justify-center p-4">
     <div class="rounded-lg shadow-xl p-6 w-fit">
-      <PianoKeys :pressed-keys="pressedKeys" :key-colors="keyColors" />
+      <PianoKeys :pressed-keys="pressedKeys" />
 
       <p class="mt-4 text-center text-gray-200">
         This virtual piano visualizes notes from a MIDI file input.
@@ -42,7 +42,6 @@ const grandPianoSampler = new Tone.Sampler({
   }
 }).toDestination();
 
-const keyColors = ref<{ [key: string]: string }>({});
 const pressedKeys = ref<Set<string>>(new Set());
 const midiEvents = ref<MidiEvent[]>([]);
 let midiPart: Tone.Part | null = null;
@@ -57,7 +56,6 @@ const playNote = (note: string): void => {
     try {
       grandPianoSampler.triggerAttack(note);
       pressedKeys.value.add(note);
-      keyColors.value[note] = 'piano-active';
       console.log(`Playing note: ${note}`);
     } catch (error) {
       console.error(`Error playing note ${note}:`, error);
@@ -70,7 +68,6 @@ const stopNote = (note: string): void => {
     try {
       grandPianoSampler.triggerRelease(note);
       pressedKeys.value.delete(note);
-      delete keyColors.value[note];
       console.log(`Stopping note: ${note}`);
     } catch (error) {
       console.error(`Error stopping note ${note}:`, error);
