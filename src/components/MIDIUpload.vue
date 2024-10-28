@@ -1,3 +1,4 @@
+<!-- MIDIUpload.vue -->
 <template>
   <div class="midi-upload">
     <input
@@ -15,11 +16,29 @@
 </template>
 
 <script setup lang="ts">
-import { Midi } from '@tonejs/midi'
+import { Midi } from '@tonejs/midi';
+
+interface MidiEvent {
+  time: number;
+  note: string;
+  type: 'noteOn' | 'noteOff';
+}
+
 
 const emitEvent = defineEmits<{
-  (e: 'midiParsed', events: { time: number; note: string; type: 'noteOn' | 'noteOff' }[]): void;
+  (e: 'midiParsed', events: MidiEvent[]): void;
 }>();
+
+function adjustNoteOctave(noteName: string, octaveShift: number): string {
+  const regex = /^([A-G]#?)(-?\d+)$/;
+  const match = noteName.match(regex);
+  if (!match) {
+    return noteName;
+  }
+  const [, note, octaveStr] = match;
+  const octave = parseInt(octaveStr, 10) + octaveShift;
+  return `${note}${octave}`;
+}
 
 const handleFileUpload = (event: Event): void => {
   const target = event.target as HTMLInputElement;
@@ -36,21 +55,29 @@ const handleFileUpload = (event: Event): void => {
         const midi = new Midi(arrayBuffer as ArrayBuffer);
         console.log("Parsed MIDI:", midi);
 
-        const midiEvents: { time: number; note: string; type: 'noteOn' | 'noteOff' }[] = [];
+        const midiEvents: MidiEvent[] = [];
 
         midi.tracks.forEach(track => {
           track.notes.forEach(note => {
+            const adjustedNoteName = adjustNoteOctave(note.name, 0);
+
             midiEvents.push({
-              time: note.time * 1000, // convert to ms
-              note: note.name,
-              type: note.velocity > 0 ? 'noteOn' : 'noteOff',
+              time: note.time,
+              note: adjustedNoteName,
+              type: 'noteOn',
+            });
+
+            midiEvents.push({
+              time: note.time + note.duration,
+              note: adjustedNoteName,
+              type: 'noteOff',
             });
           });
         });
 
-        midiEvents.sort((a, b) => a.time - b.time); // sort by time
+        midiEvents.sort((a, b) => a.time - b.time);
 
-        // emit parsed MIDI events
+        console.log("Emitting MIDI events:", midiEvents);
         emitEvent('midiParsed', midiEvents);
       } catch (error) {
         console.error('Error parsing MIDI file:', error);

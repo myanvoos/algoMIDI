@@ -1,6 +1,7 @@
+<!-- Piano.vue -->
 <template>
   <div class="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-    <div class="bg-white rounded-lg shadow-xl p-6 w-full">
+    <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-4xl">
       <h1 class="text-3xl font-bold text-center mb-6">MIDI Piano</h1>
 
       <MIDIUpload @midiParsed="handleMIDIParsed" />
@@ -11,7 +12,9 @@
         This virtual piano visualizes notes from a MIDI file input.
       </p>
 
-      <button @click="play">Play MIDI!</button>
+      <button @click="play" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors">
+        Play MIDI!
+      </button>
     </div>
   </div>
 </template>
@@ -22,75 +25,45 @@ import PianoKeys from "./PianoKeys.vue";
 import MIDIUpload from "./MIDIUpload.vue";
 import * as Tone from 'tone';
 
-const audioContext = new window.AudioContext();
-
 const pressedKeys = ref<string[]>([]);
 
 const midiEvents = ref<{ time: number; note: string; type: 'noteOn' | 'noteOff' }[]>([]);
 
-const noteToFrequency = (noteId: string): number => {
-  const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-  const baseFreq = 440; // Frequency of A4
-  const baseIndex = notes.indexOf('A');
-
-  const regex = /^([A-G]#?)(\d+)$/; // extract note and octave
-  const match = noteId.match(regex);
-  if (!match) return baseFreq;
-
-  const [, note, octaveStr] = match;
-  const octave = parseInt(octaveStr, 10);
-
-  const noteIndex = notes.indexOf(note);
-  const semitones = (octave - 4) * 12 + noteIndex - baseIndex;
-
-  return baseFreq * Math.pow(2, semitones / 12);
-};
+const synth = new Tone.PolySynth(Tone.Synth).toDestination();
+synth.set({
+  oscillator: {
+    type: 'sine', //  change to 'triangle', 'sawtooth', etc.
+  },
+  envelope: {
+    attack: 0.05,
+    decay: 0.1,
+    sustain: 0.7,
+    release: 0.1,
+  },
+});
+const masterGain = new Tone.Gain(0.8).toDestination();
+synth.connect(masterGain);
 
 const playNote = (note: string): void => {
-  const now = Tone.now();
-  const frequency = noteToFrequency(noteId);
-
-  const oscillator = new Tone.Oscillator(frequency, 'sine').toDestination();
-  const gainNode = new Tone.Gain(0.5).toDestination();
-
-  oscillator.connect(gainNode);
-  oscillator.start(now);
-  oscillator.stop(now + 1);
+  console.log(`Playing note: ${note}`);
+  synth.triggerAttack(note);
 
   if (!pressedKeys.value.includes(note)) {
     pressedKeys.value = [...pressedKeys.value, note];
   }
+};
 
-  setTimeout(() => {
-    pressedKeys.value = pressedKeys.value.filter(key => key !== note);
-  }, 350); // 0.35 seconds
+const stopNote = (noteId: string): void => {
+  console.log(`Stopping note: ${noteId}`);
+  synth.triggerRelease(noteId);
+
+  pressedKeys.value = pressedKeys.value.filter(key => key !== noteId);
 };
 
 const handleMIDIParsed = (events: { time: number; note: string; type: 'noteOn' | 'noteOff' }[]): void => {
   midiEvents.value = events;
+  console.log("MIDI handled:", midiEvents.value);
 }
-
-// DEBUG
-const simulateMidiInput = (): void => {
-  const midiSequence: { noteId: string; delay: number }[] = [
-    { noteId: 'C4', delay: 0 },
-    { noteId: 'E4', delay: 500 },
-    { noteId: 'G4', delay: 1000 },
-    { noteId: 'C5', delay: 1500 },
-    { noteId: 'E5', delay: 2000 },
-    { noteId: 'G5', delay: 2500 },
-  ];
-
-  // testing for chords
-  playNote('C4');
-  playNote('E4');
-
-  midiSequence.forEach(event => {
-    setTimeout(() => {
-      playNote(event.noteId);
-    }, event.delay);
-  });
-};
 
 const play = async (): Promise<void> => {
   await Tone.start();
@@ -102,11 +75,18 @@ const play = async (): Promise<void> => {
     if (event.type === 'noteOn') {
       Tone.getTransport().scheduleOnce(() => {
         playNote(event.note);
-      }, event.time / 1000);
+      }, event.time);
+    } else if (event.type === 'noteOff') {
+      Tone.getTransport().scheduleOnce(() => {
+        stopNote(event.note);
+      }, event.time);
     }
-    // TODO: noteOff
-  })
+  });
 
-  Tone.getTransport().start()
+  Tone.getTransport().start();
 }
 </script>
+
+<style scoped>
+
+</style>
