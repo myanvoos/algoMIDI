@@ -15,7 +15,7 @@
 </template>
 
 <script setup lang="ts">
-import * as Tone from 'tone';
+import { Midi } from '@tonejs/midi'
 
 const emitEvent = defineEmits<{
   (e: 'midiParsed', events: { time: number; note: string; type: 'noteOn' | 'noteOff' }[]): void;
@@ -33,8 +33,8 @@ const handleFileUpload = (event: Event): void => {
     const arrayBuffer = e.target?.result;
     if (arrayBuffer && typeof arrayBuffer !== 'string') {
       try {
-        const midi = new Tone.Midi(arrayBuffer as ArrayBuffer);
-        console.log("Midi:", midi);
+        const midi = new Midi(arrayBuffer as ArrayBuffer);
+        console.log("Parsed MIDI:", midi);
 
         const midiEvents: { time: number; note: string; type: 'noteOn' | 'noteOff' }[] = [];
 
