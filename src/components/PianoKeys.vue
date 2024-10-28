@@ -7,13 +7,22 @@
 
 
 <script setup lang="ts">
+import { computed, ref } from 'vue';
+
+// Note with octave
 interface Note {
+  id: string; // i.e. C4, D#5
+  note: BaseNote;
+}
+
+// Note without octave
+interface BaseNote {
   key: string;
   isSharp: boolean;
   position: number;
 }
 
-export const fullKeyboard: Note[] = [
+const baseNotes: BaseNote[] = [
   { key: 'C', isSharp: false, position: 0 },
   { key: 'C#', isSharp: true, position: 7 },
   { key: 'D', isSharp: false, position: 14 },
@@ -27,5 +36,18 @@ export const fullKeyboard: Note[] = [
   { key: 'A#', isSharp: true, position: 77 },
   { key: 'B', isSharp: false, position: 84 }
 ];
+
+const fullKeyboard = computed(() => {
+  // Readonly
+  const keys: Note[] = [];
+  for (let octave = 0; octave <= 8; octave++) {
+    baseNotes.forEach((note) => {
+      const position = note.position + octave * 100;
+      const id = `${note.key}${octave}`;
+      keys.push({...note, id, position });
+    })
+  }
+  return keys;
+});
 </script>
 
