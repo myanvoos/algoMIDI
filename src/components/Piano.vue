@@ -15,9 +15,6 @@
       <button @click="play" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors">
         Play MIDI!
       </button>
-      <button @click="testNote" class="mt-4 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors">
-        Test C4
-      </button>
     </div>
   </div>
 </template>
@@ -72,15 +69,6 @@ const playNote = (note: string): void => {
     } catch (error) {
       console.error(`Error playing note ${note}:`, error);
     }
-  }
-};
-
-const testNote = () => {
-  if (grandPianoSampler.loaded) {
-    grandPianoSampler.triggerAttackRelease('C4', '2n');
-    console.log("Test note C4 played");
-  } else {
-    console.warn("Sampler not loaded yet. Cannot play test note.");
   }
 };
 
