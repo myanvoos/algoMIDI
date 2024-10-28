@@ -1,13 +1,13 @@
 <template>
   <div class="piano">
-    <div v-for="node in fullKeyboard" :key="node.key">
+    <div v-for="node in fullKeyboard" :key="node.id">
     </div>
   </div>
 </template>
 
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 
 // Note with octave
 interface Note {
@@ -42,9 +42,9 @@ const fullKeyboard = computed(() => {
   const keys: Note[] = [];
   for (let octave = 0; octave <= 8; octave++) {
     baseNotes.forEach((note) => {
-      const position = note.position + octave * 100;
+      const baseNote: BaseNote = { key: note.key, isSharp: note.isSharp, position: note.position + octave * 100 };
       const id = `${note.key}${octave}`;
-      keys.push({...note, id, position });
+      keys.push({ id: id, note: baseNote });
     })
   }
   return keys;
