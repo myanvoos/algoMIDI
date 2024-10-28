@@ -1,6 +1,6 @@
 
 // Note with octave
-interface Note {
+export interface Note {
   id: string; // i.e. C4, D#5
   baseNote: BaseNote;
   octave: number;

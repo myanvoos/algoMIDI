@@ -2,16 +2,22 @@
   <div class="min-h-screen bg-gray-100 flex items-center justify-center p-4">
     <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-4xl">
       <h1 class="text-3xl font-bold text-center mb-6">MIDI Piano</h1>
-      <div class="relative h-64 bg-gray-200 rounded-lg overflow-hidden">
+
+      <div class="piano">
         <div
-            v-for="note in fullKeyboard"
-            :id="note.id"
-            :class="['absolute',
-                      note.baseNote.isSharp ? 'bg-gray-800 h-2/3 w-10 z-10' : 'bg-white h-full w-16',
-                      'border border-gray-300 rounded-b-lg transition-colors duration-100',
-                      pressedKeys.includes(note.baseNote.key) ? (note.baseNote.isSharp ? 'bg-gray-600' : 'bg-blue-100') : '']"
-            :style="{ left: `${note.baseNote.position}%` }">
-        </div>
+          v-for="note in whiteKeys"
+          :key="note.id"
+          :class="['white-key', pressedKeys.includes(note.id) ? 'active' : '']"
+          :style="{ left: `${note.position}%`, width: `${note.baseNote.width}%` }`}"
+        ></div>
+
+        <div
+            v-for="note in blackKeys"
+            :key="note.id"
+            :class="['black-key', pressedKeys.includes(note.id) ? 'active' : '']"
+            :style="{ left: `${note.position}%`, width: `${note.baseNote.width}%` }`}"
+        ></div>
+
       </div>
       <p class="mt-4 text-center text-gray-600">
         This virtual piano visualizes notes from a MIDI file input.
@@ -23,7 +29,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { fullKeyboard } from '../data/keyboardData.js';
+import { Note, fullKeyboard} from "../data/keyboardData.ts";
 
 const audioContext = new window.AudioContext();
 
