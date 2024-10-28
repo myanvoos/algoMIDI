@@ -42,7 +42,23 @@ export const generateFullKeyboard = (): Note[] => {
         return;
       }
 
+      if (octave === endOctave && note.key !== 'C') {
+        return;
+      }
 
+      const id = `${note.key}${octave}`;
+      const position = octave * 100 + note.offset;
+
+      keys.push({
+        id,
+        baseNote: note,
+        octave,
+        position,
+      })
     })
   }
+
+  return keys;
 }
+
+export const fullKeyboard = generateFullKeyboard();
