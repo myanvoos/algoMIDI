@@ -18,28 +18,18 @@
 <script setup lang="ts">
 import { Midi } from '@tonejs/midi';
 
-interface MidiEvent {
+export interface MidiEvent {
   time: number;
   note: string;
   type: 'noteOn' | 'noteOff';
-  instrument: number,
+  trackName: string,
+  channel: number,
 }
 
 
 const emitEvent = defineEmits<{
   (e: 'midiParsed', events: MidiEvent[]): void;
 }>();
-
-function adjustNoteOctave(noteName: string, octaveShift: number): string {
-  const regex = /^([A-G]#?)(-?\d+)$/;
-  const match = noteName.match(regex);
-  if (!match) {
-    return noteName;
-  }
-  const [, note, octaveStr] = match;
-  const octave = parseInt(octaveStr, 10) + octaveShift;
-  return `${note}${octave}`;
-}
 
 const handleFileUpload = (event: Event): void => {
   const target = event.target as HTMLInputElement;
@@ -53,30 +43,34 @@ const handleFileUpload = (event: Event): void => {
     const arrayBuffer = e.target?.result;
     if (arrayBuffer && typeof arrayBuffer !== 'string') {
       try {
+
         const midi = new Midi(arrayBuffer as ArrayBuffer);
         console.log("Parsed MIDI:", midi);
 
         const midiEvents: MidiEvent[] = [];
 
         midi.tracks.forEach(track => {
-          const program = track.instrument.number || 0;
-          console.log(`Track Instrument Program: ${program} (${track.instrument.name})`)
+
+
+          const trackName = track.name || `Track ${midi.tracks.indexOf(track)}`;
+          const channel = track.channel;
 
           track.notes.forEach(note => {
-            const adjustedNoteName = adjustNoteOctave(note.name, 0);
 
             midiEvents.push({
               time: note.time,
-              note: adjustedNoteName,
+              note: note.name,
               type: 'noteOn',
-              instrument: program
+              trackName,
+              channel
             });
 
             midiEvents.push({
               time: note.time + note.duration,
-              note: adjustedNoteName,
+              note: note.name,
               type: 'noteOff',
-              instrument: program
+              trackName,
+              channel
             });
           });
         });

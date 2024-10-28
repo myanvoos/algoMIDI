@@ -6,7 +6,7 @@
 
       <MIDIUpload @midiParsed="handleMIDIParsed" />
 
-      <PianoKeys :pressed-keys="pressedKeys" />
+      <PianoKeys :pressed-keys="pressedKeys" :key-colors="keyColors" />
 
       <p class="mt-4 text-center text-gray-600">
         This virtual piano visualizes notes from a MIDI file input.
@@ -24,46 +24,88 @@ import { ref } from 'vue';
 import PianoKeys from "./PianoKeys.vue";
 import MIDIUpload from "./MIDIUpload.vue";
 import * as Tone from 'tone';
+import {grandPianoSampler} from "../data/instrumentMapping.ts";
 
-const pressedKeys = ref<string[]>([]);
-
-const midiEvents = ref<{ time: number; note: string; type: 'noteOn' | 'noteOff' }[]>([]);
-
-const synth = new Tone.PolySynth(Tone.Synth).toDestination();
-synth.set({
-  oscillator: {
-    type: 'sine', //  change to 'triangle', 'sawtooth', etc.
-  },
-  envelope: {
-    attack: 0.05,
-    decay: 0.1,
-    sustain: 0.7,
-    release: 0.1,
-  },
-});
-const masterGain = new Tone.Gain(0.8).toDestination();
-synth.connect(masterGain);
-
-const playNote = (note: string): void => {
-  console.log(`Playing note: ${note}`);
-  synth.triggerAttack(note);
-
-  if (!pressedKeys.value.includes(note)) {
-    pressedKeys.value = [...pressedKeys.value, note];
-  }
-};
-
-const stopNote = (noteId: string): void => {
-  console.log(`Stopping note: ${noteId}`);
-  synth.triggerRelease(noteId);
-
-  pressedKeys.value = pressedKeys.value.filter(key => key !== noteId);
-};
-
-const handleMIDIParsed = (events: { time: number; note: string; type: 'noteOn' | 'noteOff' }[]): void => {
-  midiEvents.value = events;
-  console.log("MIDI handled:", midiEvents.value);
+interface MidiEvent {
+  time: number;
+  note: string;
+  type: 'noteOn' | 'noteOff';
+  trackName: string;
+  channel: number;
 }
+
+const keyColors = ref<{ [key: string]: string }>({});
+
+const pressedKeys = ref<Set<string>>(new Set());
+
+const midiEvents = ref<MidiEvent[]>([]);
+
+const synths: { [key: string]: Tone.PolySynth } = {};
+
+function getSynthForEvent(event: MidiEvent): Tone.PolySynth {
+  const { trackName, channel } = event;
+
+  if (!synths[trackName]) {
+    let synth;
+    if (channel === 9) {
+      // Drum Kit
+      synth = new Tone.PolySynth(Tone.MembraneSynth).toDestination();
+    } else {
+      // Grand Piano or other instruments
+      synth = new Tone.PolySynth(Tone.Synth).toDestination();
+    }
+
+    synth.set({
+      oscillator: {
+        type: channel === 9 ? 'square' : 'sine',
+      },
+      envelope: {
+        attack: 0.0005,
+        decay: 0.01,
+        sustain: 0.35,
+        release: 0.1,
+      },
+    });
+
+    const masterGain = new Tone.Gain(0.8).toDestination();
+    synth.connect(masterGain);
+
+    synths[trackName] = synth;
+  }
+
+  return synths[trackName];
+}
+
+const playNote = (note: string, event: MidiEvent): void => {
+  // const synth = getSynthForEvent(event);
+  // synth.triggerAttack(note);
+
+  Tone.loaded().then(() => {
+    grandPianoSampler.triggerAttackRelease(note, 4);
+  });
+
+  pressedKeys.value.add(note);
+
+  let colorClass = '';
+  if (event.channel === 9) {
+    colorClass = 'drum-active';
+  } else {
+    colorClass = 'piano-active';
+  }
+  keyColors.value[note] = colorClass;
+};
+
+const stopNote = (note: string, event: MidiEvent): void => {
+  const synth = getSynthForEvent(event);
+  synth.triggerRelease(note);
+
+  pressedKeys.value.delete(note);
+  delete keyColors.value[note];
+};
+
+const handleMIDIParsed = (events: MidiEvent[]): void => {
+  midiEvents.value = events;
+};
 
 const play = async (): Promise<void> => {
   await Tone.start();
@@ -71,21 +113,22 @@ const play = async (): Promise<void> => {
   Tone.getTransport().cancel();
   Tone.getTransport().stop();
 
-  midiEvents.value.forEach(event => {
+  midiEvents.value.forEach((event) => {
     if (event.type === 'noteOn') {
       Tone.getTransport().scheduleOnce(() => {
-        playNote(event.note);
+        playNote(event.note, event);
       }, event.time);
     } else if (event.type === 'noteOff') {
       Tone.getTransport().scheduleOnce(() => {
-        stopNote(event.note);
+        stopNote(event.note, event);
       }, event.time);
     }
   });
 
   Tone.getTransport().start();
-}
+};
 </script>
+
 
 <style scoped>
 

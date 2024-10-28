@@ -3,14 +3,14 @@
   <div class="piano">
     <div
         v-for="(note, index) in whiteKeys"
-        :key="note.id"
-        :class="['white-key', pressedKeys.includes(note.id) ? 'active' : '']"
+        :key="index"
+        :class="['white-key', getKeyClass(note.id)]"
     ></div>
 
     <div
         v-for="(note, index) in blackKeys"
-        :key="note.id"
-        :class="['black-key', pressedKeys.includes(note.id) ? 'active' : '']"
+        :key="index"
+        :class="['black-key', getKeyClass(note.id)]"
         :style="{ left: `${getBlackKeyPosition(index)}%` }"
     ></div>
 
@@ -21,8 +21,9 @@
 import { fullKeyboard} from "../data/keyboardData.ts";
 import {computed} from "vue";
 
-defineProps<{
-  pressedKeys: string[];
+const props = defineProps<{
+  pressedKeys: Set<string>;
+  keyColors: { [key: string]: string };
 }>();
 
 
@@ -53,6 +54,15 @@ const getBlackKeyPosition = (index: number): number => {
 
   return 0;
 }
+
+function getKeyClass(noteId: string): string {
+  if (props.pressedKeys.has(noteId)) {
+    const colorClass = props.keyColors[noteId] || 'active';
+    return colorClass;
+  }
+  return '';
+}
+
 </script>
 
 <style scoped>
@@ -79,6 +89,26 @@ const getBlackKeyPosition = (index: number): number => {
   background-color: lightblue;
 }
 
+.white-key.piano-active {
+  background-color: lightgreen;
+}
+
+.white-key.drum-active {
+  background-color: lightcoral;
+}
+
+.black-key.active {
+  background-color: #3b82f6;
+}
+
+.black-key.piano-active {
+  background-color: green;
+}
+
+.black-key.drum-active {
+  background-color: red;
+}
+
 .black-key {
   position: absolute;
   width: 1.65%; /* adjust */
@@ -90,7 +120,4 @@ const getBlackKeyPosition = (index: number): number => {
   z-index: 2;
 }
 
-.black-key.active {
-  background-color: #3b82f6;
-}
 </style>
