@@ -15,16 +15,19 @@
       <button @click="play" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors">
         Play MIDI!
       </button>
+      <button @click="testNote" class="mt-4 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors">
+        Test C4
+      </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import {onMounted, ref} from 'vue';
 import PianoKeys from "./PianoKeys.vue";
 import MIDIUpload from "./MIDIUpload.vue";
 import * as Tone from 'tone';
-import {grandPianoSampler} from "../data/instrumentMapping.ts";
+const samplerLoaded = ref(false);
 
 interface MidiEvent {
   time: number;
@@ -34,99 +37,103 @@ interface MidiEvent {
   channel: number;
 }
 
+const grandPianoSampler = new Tone.Sampler({
+  urls: {
+    'C4': 'C4.mp3',  // Tone.js will interpolate the rest of the notes
+    'G4': 'G4.mp3',
+    'C5': 'C5.mp3'
+  },
+  release: 1,
+  baseUrl: "/samples/piano/",
+  onload: () => {
+    console.log("Sampler loaded successfully");
+    samplerLoaded.value = true;
+  }
+}).toDestination();
+
 const keyColors = ref<{ [key: string]: string }>({});
 
 const pressedKeys = ref<Set<string>>(new Set());
 
 const midiEvents = ref<MidiEvent[]>([]);
 
-const synths: { [key: string]: Tone.PolySynth } = {};
-
-function getSynthForEvent(event: MidiEvent): Tone.PolySynth {
-  const { trackName, channel } = event;
-
-  if (!synths[trackName]) {
-    let synth;
-    if (channel === 9) {
-      // Drum Kit
-      synth = new Tone.PolySynth(Tone.MembraneSynth).toDestination();
-    } else {
-      // Grand Piano or other instruments
-      synth = new Tone.PolySynth(Tone.Synth).toDestination();
-    }
-
-    synth.set({
-      oscillator: {
-        type: channel === 9 ? 'square' : 'sine',
-      },
-      envelope: {
-        attack: 0.0005,
-        decay: 0.01,
-        sustain: 0.35,
-        release: 0.1,
-      },
-    });
-
-    const masterGain = new Tone.Gain(0.8).toDestination();
-    synth.connect(masterGain);
-
-    synths[trackName] = synth;
-  }
-
-  return synths[trackName];
-}
-
-const playNote = (note: string, event: MidiEvent): void => {
-  // const synth = getSynthForEvent(event);
-  // synth.triggerAttack(note);
-
-  Tone.loaded().then(() => {
-    grandPianoSampler.triggerAttackRelease(note, 4);
-  });
-
-  pressedKeys.value.add(note);
-
-  let colorClass = '';
-  if (event.channel === 9) {
-    colorClass = 'drum-active';
-  } else {
-    colorClass = 'piano-active';
-  }
-  keyColors.value[note] = colorClass;
-};
-
-const stopNote = (note: string, event: MidiEvent): void => {
-  const synth = getSynthForEvent(event);
-  synth.triggerRelease(note);
-
-  pressedKeys.value.delete(note);
-  delete keyColors.value[note];
-};
-
 const handleMIDIParsed = (events: MidiEvent[]): void => {
   midiEvents.value = events;
+  console.log("MIDI handled:", midiEvents.value);
+};
+
+const playNote = (note: string): void => {
+  if (samplerLoaded.value) {
+    try {
+      grandPianoSampler.triggerAttack(note);
+      pressedKeys.value.add(note);
+      keyColors.value[note] = 'piano-active';
+      console.log(`Playing note: ${note}`);
+    } catch (error) {
+      console.error(`Error playing note ${note}:`, error);
+    }
+  }
+};
+
+const testNote = () => {
+  if (grandPianoSampler.loaded) {
+    grandPianoSampler.triggerAttackRelease('C4', '2n');
+    console.log("Test note C4 played");
+  } else {
+    console.warn("Sampler not loaded yet. Cannot play test note.");
+  }
+};
+
+const stopNote = (note: string): void => {
+  if (samplerLoaded.value) {
+    try {
+      grandPianoSampler.triggerRelease(note);
+      pressedKeys.value.delete(note);
+      delete keyColors.value[note];
+      console.log(`Stopping note: ${note}`);
+    } catch (error) {
+      console.error(`Error stopping note ${note}:`, error);
+    }
+  }
 };
 
 const play = async (): Promise<void> => {
-  await Tone.start();
+  if (!samplerLoaded.value) {
+    console.warn('Sampler not loaded yet');
+    return;
+  }
 
-  Tone.getTransport().cancel();
-  Tone.getTransport().stop();
+  try {
+    await Tone.start();
 
-  midiEvents.value.forEach((event) => {
-    if (event.type === 'noteOn') {
-      Tone.getTransport().scheduleOnce(() => {
-        playNote(event.note, event);
+    Tone.getTransport().cancel();
+    Tone.getTransport().stop();
+
+    midiEvents.value.forEach((event) => {
+      Tone.getTransport().schedule(() => {
+        if (event.type === 'noteOn') {
+          playNote(event.note);
+        } else if (event.type === 'noteOff') {
+          stopNote(event.note);
+        }
       }, event.time);
-    } else if (event.type === 'noteOff') {
-      Tone.getTransport().scheduleOnce(() => {
-        stopNote(event.note, event);
-      }, event.time);
-    }
-  });
+    });
 
-  Tone.getTransport().start();
+    Tone.getTransport().start();
+  } catch (error) {
+    console.error('Error playing MIDI:', error);
+  }
 };
+
+
+// Clean up when component is unmounted
+onMounted(() => {
+  return () => {
+    Tone.getTransport().stop();
+    Tone.getTransport().cancel();
+    grandPianoSampler.dispose();
+  };
+});
 </script>
 
 
