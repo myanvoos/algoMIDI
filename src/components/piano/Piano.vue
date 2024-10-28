@@ -1,20 +1,19 @@
 <!-- Piano.vue -->
 <template>
   <div class="min-h-screen flex items-center justify-center p-4">
-    <div class="bg-gray-700 rounded-lg shadow-xl p-6 w-fit">
-      <h1 class="text-3xl font-bold text-center mb-6">MIDI Piano</h1>
-
-      <MIDIUpload @midiParsed="handleMIDIParsed" />
-
+    <div class="rounded-lg shadow-xl p-6 w-fit">
       <PianoKeys :pressed-keys="pressedKeys" :key-colors="keyColors" />
 
       <p class="mt-4 text-center text-gray-200">
         This virtual piano visualizes notes from a MIDI file input.
       </p>
+      <div class="flex justify-between">
+        <MIDIUpload @midiParsed="handleMIDIParsed" />
+        <button @click="play" class="mt-4 bg-slate-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors">
+          Play MIDI!
+        </button>
+      </div>
 
-      <button @click="play" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors">
-        Play MIDI!
-      </button>
     </div>
   </div>
 </template>
@@ -22,17 +21,11 @@
 <script setup lang="ts">
 import {onMounted, ref} from 'vue';
 import PianoKeys from "./PianoKeys.vue";
-import MIDIUpload from "./MIDIUpload.vue";
+import MIDIUpload from "../MIDIUpload.vue";
 import * as Tone from 'tone';
-const samplerLoaded = ref(false);
+import {MidiEvent} from "../../types/types";
 
-interface MidiEvent {
-  time: number;
-  note: string;
-  type: 'noteOn' | 'noteOff';
-  trackName: string;
-  channel: number;
-}
+const samplerLoaded = ref(false);
 
 const grandPianoSampler = new Tone.Sampler({
   urls: {

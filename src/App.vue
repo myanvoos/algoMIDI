@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import Piano from "./components/Piano.vue";
+import Piano from "./components/piano/Piano.vue";
+import MathCanvas from "./components/maths/MathCanvas.vue";
 </script>
 
 <template>
-  <div>
+  <div class="flex flex-col justify-between overflow-hidden">
+    <MathCanvas />
     <Piano />
   </div>
 </template>

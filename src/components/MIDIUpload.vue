@@ -17,15 +17,7 @@
 
 <script setup lang="ts">
 import { Midi } from '@tonejs/midi';
-
-export interface MidiEvent {
-  time: number;
-  note: string;
-  type: 'noteOn' | 'noteOff';
-  trackName: string,
-  channel: number,
-}
-
+import {MidiEvent} from "../types/types";
 
 const emitEvent = defineEmits<{
   (e: 'midiParsed', events: MidiEvent[]): void;

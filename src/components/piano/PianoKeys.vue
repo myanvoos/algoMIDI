@@ -18,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-import { fullKeyboard} from "../data/keyboardData.ts";
+import {fullKeyboard} from "../../data/keyboardData.ts";
 import {computed} from "vue";
 
 const props = defineProps<{
@@ -57,8 +57,7 @@ const getBlackKeyPosition = (index: number): number => {
 
 function getKeyClass(noteId: string): string {
   if (props.pressedKeys.has(noteId)) {
-    const colorClass = props.keyColors[noteId] || 'active';
-    return colorClass;
+    return props.keyColors[noteId] || 'active';
   }
   return '';
 }
@@ -72,13 +71,13 @@ function getKeyClass(noteId: string): string {
   width: 1100px;
   height: 200px;
   background-color: #fff;
-  border: 2px solid #000;
+  border: 1px solid #213547;
   box-sizing: border-box;
 }
 
 .white-key {
   flex: 1;
-  border: 1px solid #000;
+  border: 1px solid slategray;
   background-color: #fff;
   position: relative;
   box-sizing: border-box;
@@ -105,8 +104,8 @@ function getKeyClass(noteId: string): string {
   position: absolute;
   width: 1.65%; /* adjust */
   height: 60%;
-  background-color: #000;
-  border: 1px solid #333;
+  background-color: #213547;
+  border: 1px solid #213547;
   border-radius: 0 0 3px 3px;
   transition: background-color 0.1s;
   z-index: 2;
