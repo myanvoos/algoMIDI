@@ -56,11 +56,13 @@ const playNote = (note: string): void => {
   oscillator.start();
   oscillator.stop(audioContext.currentTime + 1);
 
-  pressedKeys.value.push(noteId);
+  if (!pressedKeys.value.includes(note)) {
+    pressedKeys.value = [...pressedKeys.value, note];
+  }
 
   setTimeout(() => {
-    pressedKeys.value = pressedKeys.value.filter(key => key !== noteId);
-  }, 1000); // 1 second
+    pressedKeys.value = pressedKeys.value.filter(key => key !== note);
+  }, 350); // 0.35 seconds
 };
 
 
@@ -73,6 +75,10 @@ const simulateMidiInput = (): void => {
     { noteId: 'E5', delay: 2000 },
     { noteId: 'G5', delay: 2500 },
   ];
+
+  // testing for chords
+  playNote('C4');
+  playNote('E4');
 
   midiSequence.forEach(event => {
     setTimeout(() => {

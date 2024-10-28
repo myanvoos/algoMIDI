@@ -1,4 +1,5 @@
 <template>
+  <p>{{pressedKeys}}</p>
   <div class="piano">
     <div
         v-for="(note, index) in whiteKeys"
@@ -23,6 +24,7 @@ import {computed} from "vue";
 defineProps<{
   pressedKeys: string[];
 }>();
+
 
 const whiteKeys = computed(() => fullKeyboard.filter(note => !note.baseNote.isSharp));
 const blackKeys = computed(() => fullKeyboard.filter(note => note.baseNote.isSharp));
