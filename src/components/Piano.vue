@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-    <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-4xl">
+    <div class="bg-white rounded-lg shadow-xl p-6 w-full">
       <h1 class="text-3xl font-bold text-center mb-6">MIDI Piano</h1>
 
       <PianoKeys :pressed-keys="pressedKeys" />
