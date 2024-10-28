@@ -3,22 +3,7 @@
     <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-4xl">
       <h1 class="text-3xl font-bold text-center mb-6">MIDI Piano</h1>
 
-      <div class="piano">
-        <div
-          v-for="note in whiteKeys"
-          :key="note.id"
-          :class="['white-key', pressedKeys.includes(note.id) ? 'active' : '']"
-          :style="{ left: `${note.position}%`, width: `${note.baseNote.width}%` }`}"
-        ></div>
 
-        <div
-            v-for="note in blackKeys"
-            :key="note.id"
-            :class="['black-key', pressedKeys.includes(note.id) ? 'active' : '']"
-            :style="{ left: `${note.position}%`, width: `${note.baseNote.width}%` }`}"
-        ></div>
-
-      </div>
       <p class="mt-4 text-center text-gray-600">
         This virtual piano visualizes notes from a MIDI file input.
       </p>
