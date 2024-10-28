@@ -2,37 +2,36 @@
   <div class="min-h-screen bg-gray-100 flex items-center justify-center p-4">
     <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-4xl">
       <h1 class="text-3xl font-bold text-center mb-6">MIDI Piano</h1>
-      <div class="mb-4 flex justify-between items-center">
-        <button @click="changeOctave(-1)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors">
-          Octave Down
-        </button>
-        <span class="text-xl font-semibold">Octave: {{ currentOctave }}</span>
-        <button @click="changeOctave(1)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors">
-          Octave Up
-        </button>
-      </div>
-      <div class="relative h-64 bg-gray-200 rounded-lg overflow-hidden" @mouseup="stopNote" @mouseleave="stopNote">
-        <div v-for="note in notes" :key="note.key"
-             :class="['absolute', note.isSharp ? 'bg-gray-800 h-2/3 w-10 z-10' : 'bg-white h-full w-16',
+      <div class="relative h-64 bg-gray-200 rounded-lg overflow-hidden">
+        <div
+            v-for="note in notes"
+            :key="note.key"
+            :class="['absolute',
+                      note.isSharp ? 'bg-gray-800 h-2/3 w-10 z-10' : 'bg-white h-full w-16',
                       'border border-gray-300 rounded-b-lg transition-colors duration-100',
-                      pressedKeys.includes(note.key) ? (note.isSharp ? 'bg-gray-600' : 'bg-gray-200') : '']"
-             :style="{ left: `${note.position}%` }"
-             @mousedown="playNote(note.key)"
-             @mouseenter="(e) => e.buttons === 1 && playNote(note.key)">
+                      pressedKeys.includes(note.key) ? (note.isSharp ? 'bg-gray-600' : 'bg-blue-100') : '']"
+            :style="{ left: `${note.position}%` }">
         </div>
       </div>
       <p class="mt-4 text-center text-gray-600">
-        Use your mouse or keyboard (A-K and W-U) to play. Z and X to change octaves.
+        This virtual piano visualizes notes from a MIDI file input.
       </p>
+      <button @click="play">Play MIDI!</button>
     </div>
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+<script setup lang="ts">
+import { ref } from 'vue';
 
-const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-const notes = [
+interface Note {
+  key: string;
+  isSharp: boolean;
+  position: number;
+}
+
+const audioContext = new window.AudioContext();
+const notes: Note[] = [
   { key: 'C', isSharp: false, position: 0 },
   { key: 'C#', isSharp: true, position: 7 },
   { key: 'D', isSharp: false, position: 14 },
@@ -47,16 +46,10 @@ const notes = [
   { key: 'B', isSharp: false, position: 84 }
 ];
 
-const currentOctave = ref(4);
-const pressedKeys = ref([]);
+const pressedKeys = ref<string[]>([]);
 
-const keyToNote = {
-  'a': 'C', 'w': 'C#', 's': 'D', 'e': 'D#', 'd': 'E', 'f': 'F',
-  't': 'F#', 'g': 'G', 'y': 'G#', 'h': 'A', 'u': 'A#', 'j': 'B', 'k': 'C'
-};
-
-const playNote = (note) => {
-  const frequency = noteToFrequency(note, currentOctave.value);
+const playNote = (note: string): void => {
+  const frequency = noteToFrequency(note);
   const oscillator = audioContext.createOscillator();
   const gainNode = audioContext.createGain();
 
@@ -72,21 +65,21 @@ const playNote = (note) => {
   oscillator.start();
   oscillator.stop(audioContext.currentTime + 0.5);
 
-  pressedKeys.value.push(note);
+  pressedKeys.value = [...pressedKeys.value, note];
+  setTimeout(() => stopNote(note), 500); // Auto-clear key after half a second
 };
 
-const stopNote = (note) => {
-  if (note) {
+const stopNote = (note: string): void => {
     pressedKeys.value = pressedKeys.value.filter(key => key !== note);
-  } else {
-    pressedKeys.value = [];
-  }
+
 };
 
-const noteToFrequency = (note, octave) => {
+const noteToFrequency = (note: string): number => {
   const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
   const baseFreq = 440; // A4 frequency
   const baseNote = notes.indexOf('A');
+
+  const octave = 5 // DEBUG
   const baseOctave = 4;
 
   const noteIndex = notes.indexOf(note);
@@ -95,30 +88,14 @@ const noteToFrequency = (note, octave) => {
   return baseFreq * Math.pow(2, semitones / 12);
 };
 
-const changeOctave = (delta) => {
-  currentOctave.value = Math.max(0, Math.min(8, currentOctave.value + delta));
-};
+const simulateMidiInput = (): void => {
+  const midiSequence = ['C', 'D', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']; // DEBUG
+  midiSequence.forEach((note, index) => {
+    setTimeout(() => playNote(note), index * 600);
+  })
+}
 
-const handleKeyDown = (event) => {
-  if (event.repeat) return;
-  if (event.key === 'z') changeOctave(-1);
-  if (event.key === 'x') changeOctave(1);
-  const note = keyToNote[event.key.toLowerCase()];
-  if (note) playNote(note);
-};
-
-const handleKeyUp = (event) => {
-  const note = keyToNote[event.key.toLowerCase()];
-  if (note) stopNote(note);
-};
-
-onMounted(() => {
-  window.addEventListener('keydown', handleKeyDown);
-  window.addEventListener('keyup', handleKeyUp);
-});
-
-onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeyDown);
-  window.removeEventListener('keyup', handleKeyUp);
-});
+const play = (): void => {
+  simulateMidiInput();
+}
 </script>
