@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import p5 from "p5"
+import p5 from "p5";
 import { Cell } from "../../../types/types.js";
-import {watch} from "vue";
+import { watch } from "vue";
 
 const props = defineProps<{
-  pressedKeys: Set<string>
-}>()
+  pressedKeys: Set<string>;
+}>();
+
+const offsetShift = 6; // Dynamic variable to control the shift amount
 
 const sketch = (p5: p5) => {
   let cellSize: number;
@@ -13,10 +15,10 @@ const sketch = (p5: p5) => {
   let height: number = 400;
 
   const octaves = [1, 2, 3, 4, 5, 6, 7];
-  const baseNotes = ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"];
-
-  let columnCount: number = baseNotes.length;
-  let rowCount: number = octaves.length;
+  const baseNotes = ["A#", "A", "B#", "B", "C", "D#", "D", "E#", "E", "F", "G#", "G"];
+  const columnCount: number = baseNotes.length;
+  const rowCount: number = octaves.length;
+  let prevCells: Cell[][] = [];
   let currentCells: Cell[][] = [];
   let nextCells: Cell[][] = [];
 
@@ -29,88 +31,46 @@ const sketch = (p5: p5) => {
 
     currentCells = initialiseStandardGrid();
     nextCells = initialiseStandardGrid();
-
-    randomizeBoard();
+    prevCells = initialiseStandardGrid();
 
     p5.noLoop();
-    p5.describe("Grid of squares that switch between white and black, demonstrating a simulation of John Conway's Game of Life. When clicked, the simulation resets.");
+    p5.describe("Grid with each row shifted to the right by offsetShift cells.");
   };
 
   p5.draw = () => {
-    // generate(); - off for now
+    p5.background("#233140"); // Clear the canvas for each redraw
 
     for (let row = 0; row < rowCount; row++) {
+      const rowOffset = (row * offsetShift) % columnCount;
+
       for (let column = 0; column < columnCount; column++) {
         let cell = currentCells[row][column];
 
-        // if (!cell.isOn) p5.fill(255);
-        // else p5.fill("#213547");
+        const shiftedColumn = (column + rowOffset) % columnCount;
 
-        if (props.pressedKeys.has(cell.note.id)) p5.fill("#213547")
-        else p5.fill(255)
+        if (props.pressedKeys.has(cell.note.id)) p5.fill("#213547");
+        else p5.fill(255);
 
         p5.stroke("slategray");
-        p5.rect(column * cellSize, row * cellSize, cellSize, cellSize);
+        p5.rect(shiftedColumn * cellSize, row * cellSize, cellSize, cellSize);
+
+        if (props.pressedKeys.has(cell.note.id)) {
+          p5.fill(255);
+          p5.textAlign(p5.CENTER, p5.CENTER);
+          p5.text(`${cell.note.id}`, shiftedColumn * cellSize + cellSize / 2, row * cellSize + cellSize / 2);
+        }
+
       }
     }
   };
 
-  watch(() => props.pressedKeys, () => {
-    p5.redraw()
-  }, { deep: true })
-
-  // p5.mousePressed = () => {
-  //   // TODO: Choose cell functionality
-  //   randomizeBoard();
-  //   p5.loop();
-  // };
-
-  function randomizeBoard() {
-    for (let row = 0; row < rowCount; row++) {
-      for (let column = 0; column < columnCount; column++) {
-        currentCells[row][column].isOn = Math.random() < 0.5;
-      }
-    }
-  }
-
-  function generate() {
-    nextCells = initialiseStandardGrid();
-
-    for (let row = 0; row < rowCount; row++) {
-      for (let column = 0; column < columnCount; column++) {
-
-        let left = (column - 1 + columnCount) % columnCount;
-        let right = (column + 1) % columnCount;
-        let above = (row - 1 + rowCount) % rowCount;
-        let below = (row + 1) % rowCount;
-
-        let neighbours =
-            (currentCells[above][left].isOn ? 1 : 0) +
-            (currentCells[above][column].isOn ? 1 : 0) +
-            (currentCells[above][right].isOn ? 1 : 0) +
-            (currentCells[row][left].isOn ? 1 : 0) +
-            (currentCells[row][right].isOn ? 1 : 0) +
-            (currentCells[below][left].isOn ? 1 : 0) +
-            (currentCells[below][column].isOn ? 1 : 0) +
-            (currentCells[below][right].isOn ? 1 : 0);
-
-        // TODO: Custom cellular automata rules
-        const cellIsOn = currentCells[row][column].isOn;
-        if (cellIsOn && (neighbours < 2 || neighbours > 3)) {
-          nextCells[row][column].isOn = false;
-        } else if (!cellIsOn && neighbours === 3) {
-          nextCells[row][column].isOn = true;
-        } else {
-          nextCells[row][column].isOn = cellIsOn;
-        }
-      }
-    }
-
-    // Swap the current and next arrays for the next generation
-    let temp = currentCells;
-    currentCells = nextCells;
-    nextCells = temp;
-  }
+  watch(
+      () => props.pressedKeys,
+      () => {
+        p5.redraw();
+      },
+      { deep: true }
+  );
 
   function initialiseStandardGrid(): Cell[][] {
     const grid: Cell[][] = [];
@@ -140,5 +100,5 @@ const sketch = (p5: p5) => {
 </template>
 
 <style scoped>
-
+/* Add any styles if necessary */
 </style>
