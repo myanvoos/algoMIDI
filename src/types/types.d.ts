@@ -16,7 +16,7 @@ export interface Note {
 // Note without octave
 export interface BaseNote {
     key: string;
-    isSharp: boolean;
+    isSharp?: boolean;
 }
 
 export interface Cell {

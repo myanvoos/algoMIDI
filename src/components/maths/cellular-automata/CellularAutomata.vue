@@ -7,7 +7,7 @@ const props = defineProps<{
   pressedKeys: Set<string>;
 }>();
 
-const offsetShift = 6; // Dynamic variable to control the shift amount
+const offsetShift = 3; // Dynamic variable to control the shift amount
 
 const sketch = (p5: p5) => {
   let cellSize: number;
@@ -53,17 +53,17 @@ const sketch = (p5: p5) => {
         const shiftedColumn = (column + rowOffset) % columnCount;
 
         if (cell.isOn) {
-          p5.fill("#213547"); // Active color
-        } else if (prevCells[row][column].isOn) {
-          p5.fill("lightskyblue")
+          p5.fill("#213547");
+        } else if (prevCell.isOn) {
+          prevCell.note.baseNote.isSharp ? p5.fill("lightblue") : p5.fill("lightskyblue")
         } else {
-          p5.fill(255); // Inactive color
+          p5.fill(255);
         }
 
         p5.rect(shiftedColumn * cellSize, row * cellSize, cellSize, cellSize);
 
         if (cell.isOn) {
-          p5.fill(255); // White text for visibility on dark background
+          p5.fill(255);
           p5.text(`${cell.note.id}`, shiftedColumn * cellSize + cellSize / 2, row * cellSize + cellSize / 2);
         }
 
@@ -100,7 +100,7 @@ const sketch = (p5: p5) => {
         const id = `${note}${octave}`;
 
         row.push({
-          note: { id, baseNote: note, octave },
+          note: { id, baseNote: { key: note, isSharp: note.includes("#") }, octave },
           isOn: false,
         });
       }
