@@ -4,13 +4,13 @@
     <div
         v-for="(note, index) in whiteKeys"
         :key="index"
-        :class="['white-key', pressedKeys.has(note.id) ? 'active' : '']"
+        :class="['white-key', props.pressedKeys.has(note.id) ? 'active' : '']"
     ></div>
 
     <div
         v-for="(note, index) in blackKeys"
         :key="index"
-        :class="['black-key', pressedKeys.has(note.id) ? 'active' : '']"
+        :class="['black-key', props.pressedKeys.has(note.id) ? 'active' : '']"
         :style="{ left: `${getBlackKeyPosition(index)}%` }"
     ></div>
 

@@ -1,110 +1,128 @@
-<script setup>
+<script setup lang="ts">
 import p5 from "p5"
+import { Cell } from "../../../types/types.js";
 
-const sketch = (p5) => {
-  let cellSize;
-  let width = 500
-  let height = 500
+const sketch = (p5: p5) => {
+  let cellSize: number;
+  let width: number = 700;
+  let height: number = 400;
 
-  let columnCount = 17
-  let rowCount = 17
-  let currentCells = []
-  let nextCells = []
+  const octaves = [1, 2, 3, 4, 5, 6, 7];
+  const baseNotes = ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"];
+
+  let columnCount: number = baseNotes.length;
+  let rowCount: number = octaves.length;
+  let currentCells: Cell[][] = [];
+  let nextCells: Cell[][] = [];
 
   p5.setup = () => {
-    p5.createCanvas(width, height)
-    p5.frameRate(10)
-    p5.background("#233140")
+    p5.createCanvas(width, height);
+    p5.frameRate(10);
+    p5.background("#233140");
 
-    cellSize = Math.floor(width / columnCount )
+    cellSize = Math.floor(width / columnCount);
 
-    for (let column = 0; column < columnCount; column++) {
-      currentCells[column] = []
-    }
-    for (let column = 0; column < columnCount; column++) {
-      nextCells[column] = []
-    }
-    p5.noLoop()
-    p5.describe("Grid of squares that switch between white and black, demonstrating a simulation of John Conway's Game of Life. When clicked, the simulation resets." )
+    currentCells = initialiseGrid();
+    nextCells = initialiseGrid();
 
-  }
+    randomizeBoard();
+
+    p5.noLoop();
+    p5.describe("Grid of squares that switch between white and black, demonstrating a simulation of John Conway's Game of Life. When clicked, the simulation resets.");
+  };
+
   p5.draw = () => {
-    generate()
-    for (let column = 0; column < columnCount; column++) {
-      for (let row = 0; row < rowCount; row++) {
+    generate();
 
-        let cell = currentCells[column][row]
+    for (let row = 0; row < rowCount; row++) {
+      for (let column = 0; column < columnCount; column++) {
+        let cell = currentCells[row][column];
 
-        if (cell === 0) p5.fill(255)
-        if (cell === 1 ) p5.fill("#213547")
-        p5.stroke("#213547")
-        p5.rect(column * cellSize, row * cellSize, cellSize, cellSize)
+        if (!cell.isOn) p5.fill(255);
+        else p5.fill("#213547");
+
+        p5.stroke("slategray");
+        p5.rect(column * cellSize, row * cellSize, cellSize, cellSize);
       }
     }
-  }
+  };
+
   p5.mousePressed = () => {
-    randomiseBoard()
-    p5.loop()
-  }
-  function randomiseBoard() {
-    for (let column = 0; column < columnCount; column++) {
-      for (let row = 0; row < rowCount; row++) {
-        currentCells[column][row] = Math.round(Math.random())
+    // TODO: Choose cell functionality
+    randomizeBoard();
+    p5.loop();
+  };
+
+  function randomizeBoard() {
+    for (let row = 0; row < rowCount; row++) {
+      for (let column = 0; column < columnCount; column++) {
+        currentCells[row][column].isOn = Math.random() < 0.5;
       }
     }
   }
 
   function generate() {
-    for (let column = 0; column < columnCount; column++) {
-      for (let row = 0; row < rowCount; row++) {
-        // Column left of current cell
-        // if column is at left edge, use modulus to wrap to right edge
+    nextCells = initialiseGrid();
+
+    for (let row = 0; row < rowCount; row++) {
+      for (let column = 0; column < columnCount; column++) {
+
         let left = (column - 1 + columnCount) % columnCount;
-
-        // Column right of current cell
-        // if column is at right edge, use modulus to wrap to left edge
         let right = (column + 1) % columnCount;
-
-        // Row above current cell
-        // if row is at top edge, use modulus to wrap to bottom edge
         let above = (row - 1 + rowCount) % rowCount;
-
-        // Row below current cell
-        // if row is at bottom edge, use modulus to wrap to top edge
         let below = (row + 1) % rowCount;
 
-        // Count living neighbors surrounding current cell
         let neighbours =
-            currentCells[left][above] +
-            currentCells[column][above] +
-            currentCells[right][above] +
-            currentCells[left][row] +
-            currentCells[right][row] +
-            currentCells[left][below] +
-            currentCells[column][below] +
-            currentCells[right][below];
+            (currentCells[above][left].isOn ? 1 : 0) +
+            (currentCells[above][column].isOn ? 1 : 0) +
+            (currentCells[above][right].isOn ? 1 : 0) +
+            (currentCells[row][left].isOn ? 1 : 0) +
+            (currentCells[row][right].isOn ? 1 : 0) +
+            (currentCells[below][left].isOn ? 1 : 0) +
+            (currentCells[below][column].isOn ? 1 : 0) +
+            (currentCells[below][right].isOn ? 1 : 0);
 
-        // Rules of Life
-        // 1. Any live cell with fewer than two live neighbours dies
-        // 2. Any live cell with more than three live neighbours dies
-        if (neighbours < 2 || neighbours > 3) {
-          nextCells[column][row] = 0;
-          // 4. Any dead cell with exactly three live neighbours will come to life.
-        } else if (neighbours === 3) {
-          nextCells[column][row] = 1;
-          // 3. Any live cell with two or three live neighbours lives, unchanged, to the next generation.
-        } else nextCells[column][row] = currentCells[column][row];
+        // TODO: Custom cellular automata rules
+        const cellIsOn = currentCells[row][column].isOn;
+        if (cellIsOn && (neighbours < 2 || neighbours > 3)) {
+          nextCells[row][column].isOn = false;
+        } else if (!cellIsOn && neighbours === 3) {
+          nextCells[row][column].isOn = true;
+        } else {
+          nextCells[row][column].isOn = cellIsOn;
+        }
       }
     }
 
-    // Swap the current and next arrays for next generation
+    // Swap the current and next arrays for the next generation
     let temp = currentCells;
     currentCells = nextCells;
     nextCells = temp;
   }
-}
 
+  function initialiseGrid(): Cell[][] {
+    const grid: Cell[][] = [];
+
+    for (let i = 0; i < octaves.length; i++) {
+      const row: Cell[] = [];
+      for (let j = 0; j < baseNotes.length; j++) {
+        const note = baseNotes[j];
+        const octave = octaves[i];
+        const id = `${note}${octave}`;
+
+        row.push({
+          note: { id, baseNote: note, octave },
+          isOn: false,
+        });
+      }
+      grid.push(row);
+    }
+
+    return grid;
+  }
+};
 </script>
+
 <template>
   <P5 :sketch="sketch" />
 </template>

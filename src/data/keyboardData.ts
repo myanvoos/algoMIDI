@@ -1,16 +1,4 @@
-
-// Note with octave
-export interface Note {
-  id: string; // i.e. C4, D#5
-  baseNote: BaseNote;
-  octave: number;
-}
-
-// Note without octave
-interface BaseNote {
-  key: string;
-  isSharp: boolean;
-}
+import {BaseNote, Note} from "../types/types";
 
 export const baseNotes: BaseNote[] = [
   { key: 'C', isSharp: false },
