@@ -38,25 +38,32 @@ const sketch = (p5: p5) => {
   };
 
   p5.draw = () => {
-    p5.background("#233140"); // Clear the canvas for each redraw
+    p5.background("#233140");
+
+    p5.stroke("slategray");
+    p5.textAlign(p5.CENTER, p5.CENTER);
+    p5.textSize(cellSize / 3); // Adjust text size relative to cell size
 
     for (let row = 0; row < rowCount; row++) {
       const rowOffset = (row * offsetShift) % columnCount;
 
       for (let column = 0; column < columnCount; column++) {
-        let cell = currentCells[row][column];
-
+        const cell = currentCells[row][column];
+        const prevCell = prevCells[row][column]
         const shiftedColumn = (column + rowOffset) % columnCount;
 
-        if (props.pressedKeys.has(cell.note.id)) p5.fill("#213547");
-        else p5.fill(255);
+        if (cell.isOn) {
+          p5.fill("#213547"); // Active color
+        } else if (prevCells[row][column].isOn) {
+          p5.fill("lightskyblue")
+        } else {
+          p5.fill(255); // Inactive color
+        }
 
-        p5.stroke("slategray");
         p5.rect(shiftedColumn * cellSize, row * cellSize, cellSize, cellSize);
 
-        if (props.pressedKeys.has(cell.note.id)) {
-          p5.fill(255);
-          p5.textAlign(p5.CENTER, p5.CENTER);
+        if (cell.isOn) {
+          p5.fill(255); // White text for visibility on dark background
           p5.text(`${cell.note.id}`, shiftedColumn * cellSize + cellSize / 2, row * cellSize + cellSize / 2);
         }
 
@@ -64,9 +71,19 @@ const sketch = (p5: p5) => {
     }
   };
 
+
   watch(
       () => props.pressedKeys,
       () => {
+        prevCells = copyGrid(currentCells);
+
+        for (let row = 0; row < rowCount; row++) {
+          for (let column = 0; column < columnCount; column++) {
+            const cell = currentCells[row][column];
+            cell.isOn = props.pressedKeys.has(cell.note.id);
+          }
+        }
+
         p5.redraw();
       },
       { deep: true }
@@ -92,6 +109,9 @@ const sketch = (p5: p5) => {
 
     return grid;
   }
+  function copyGrid(grid: Cell[][]): Cell[][] {
+    return grid.map(row => row.map(cell => ({...cell, note: {...cell.note } })))
+  }
 };
 </script>
 
@@ -100,5 +120,4 @@ const sketch = (p5: p5) => {
 </template>
 
 <style scoped>
-/* Add any styles if necessary */
 </style>
