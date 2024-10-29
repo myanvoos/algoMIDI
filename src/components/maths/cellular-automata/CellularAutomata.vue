@@ -35,8 +35,9 @@ const sketch = (p5) => {
 
         let cell = currentCells[column][row]
 
-        p5.fill((1 - cell) * 255)
-        p5.stroke(0)
+        if (cell === 0) p5.fill(255)
+        if (cell === 1 ) p5.fill("#213547")
+        p5.stroke("#213547")
         p5.rect(column * cellSize, row * cellSize, cellSize, cellSize)
       }
     }

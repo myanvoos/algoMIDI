@@ -1,6 +1,6 @@
 <!-- Piano.vue -->
 <template>
-  <div class="min-h-screen flex items-center justify-center p-4">
+  <div class="flex items-center justify-center p-4">
     <div class="rounded-lg shadow-xl p-6 w-fit">
       <PianoKeys :pressed-keys="pressedKeys" />
 
@@ -9,7 +9,7 @@
       </p>
       <div class="flex justify-between">
         <MIDIUpload @midiParsed="handleMIDIParsed" />
-        <button @click="togglePlayPause" class="mt-4 bg-slate-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors">
+        <button @click="togglePlayPause" class="mt-4 bg-slate-500 text-white px-4 py-2 rounded hover:bg-sky-600 transition-colors">
           {{  isPlaying ? 'Pause' : 'Play' }}
         </button>
       </div>
@@ -34,17 +34,21 @@ const grandPianoSampler = new Tone.Sampler({
     'C5': 'C5.mp3'
   },
   release: 1,
-  baseUrl: "/samples/piano/",
-
+  baseUrl: "/samples/piano/", // Using base grand piano sampler for now
   onload: () => {
     console.log("Sampler loaded successfully");
     samplerLoaded.value = true;
   }
 }).toDestination();
 
-const isPlaying = ref<boolean>(false);
+// Use Set instead of Array for storing pressed keys, for O(1) lookup time.
+// Certain conditions are satisfied:
+// - The keys are unique values without duplication
+// - The order of pressed keys is not important. Multiple pressed keys form a chord.
 const pressedKeys = ref<Set<string>>(new Set());
+
 const midiEvents = ref<MidiEvent[]>([]);
+const isPlaying = ref<boolean>(false);
 let midiPart: Tone.Part | null = null;
 
 const handleMIDIParsed = (events: MidiEvent[]): void => {

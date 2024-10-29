@@ -30,11 +30,10 @@ const whiteKeys = computed(() => fullKeyboard.filter(note => !note.baseNote.isSh
 const blackKeys = computed(() => fullKeyboard.filter(note => note.baseNote.isSharp));
 
 const getBlackKeyPosition = (index: number): number => {
-    // special keys that need special spacing
     const blackKeyPattern = ['C#', 'D#', 'F#', 'G#', 'A#'];
 
     const totalWhiteKeys = whiteKeys.value.length;
-    const whiteKeyWidth = 100 / totalWhiteKeys; // this is percentage width
+    const whiteKeyWidth = 100 / totalWhiteKeys; // This is percentage width
 
   let blackKeyCount = 0;
   let position = 0;
