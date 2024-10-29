@@ -138,6 +138,45 @@ const sketch = (p5: p5) => {
   function copyGrid(grid: Cell[][]): Cell[][] {
     return grid.map(row => row.map(cell => ({...cell, note: {...cell.note } })))
   }
+
+  function generate() {
+    nextCells = initialiseStandardGrid();
+
+    for (let row = 0; row < rowCount; row++) {
+      for (let column = 0; column < columnCount; column++) {
+
+        let left = (column - 1 + columnCount) % columnCount;
+        let right = (column + 1) % columnCount;
+        let above = (row - 1 + rowCount) % rowCount;
+        let below = (row + 1) % rowCount;
+
+        let neighbours =
+            (currentCells[above][left].isOn ? 1 : 0) +
+            (currentCells[above][column].isOn ? 1 : 0) +
+            (currentCells[above][right].isOn ? 1 : 0) +
+            (currentCells[row][left].isOn ? 1 : 0) +
+            (currentCells[row][right].isOn ? 1 : 0) +
+            (currentCells[below][left].isOn ? 1 : 0) +
+            (currentCells[below][column].isOn ? 1 : 0) +
+            (currentCells[below][right].isOn ? 1 : 0);
+
+        // TODO: Custom cellular automata rules
+        const cellIsOn = currentCells[row][column].isOn;
+        if (cellIsOn && (neighbours < 2 || neighbours > 3)) {
+          nextCells[row][column].isOn = false;
+        } else if (!cellIsOn && neighbours === 3) {
+          nextCells[row][column].isOn = true;
+        } else {
+          nextCells[row][column].isOn = cellIsOn;
+        }
+      }
+    }
+
+    // Swap the current and next arrays for the next generation
+    let temp = currentCells;
+    currentCells = nextCells;
+    nextCells = temp;
+  }
 };
 </script>
 
