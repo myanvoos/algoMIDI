@@ -10,7 +10,8 @@
       <div class="flex justify-between">
 
         <!-- NOTE: MIDIUpload emits the MIDI parsed event, so we need an upwards data flow with @ not : -->
-        <MIDIUpload @midiParsed="props.handleMIDIParsed" />
+        <MIDIUpload v-if="!props.isManual" @midiParsed="props.handleMIDIParsed" />
+
         <button @click="props.togglePlayPause" class="mt-4 bg-slate-500 text-white px-4 py-2 rounded hover:bg-sky-600 transition-colors">
           {{ props.isPlaying ? 'Pause' : 'Play' }}
         </button>
@@ -29,6 +30,7 @@ const props = defineProps<{
   togglePlayPause: () => void;
   handleMIDIParsed: (events: MidiEvent[]) => void;
   isPlaying: boolean;
+  isManual: boolean;
 }>();
 </script>
 

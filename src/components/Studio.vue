@@ -4,6 +4,8 @@ import MathsCanvas from "./maths/MathsCanvas.vue";
 import {onMounted, ref} from 'vue';
 import * as Tone from 'tone';
 import {MidiEvent} from "../types/types";
+import MidiWriter from 'midi-writer-js';
+import MIDIBrowser from "./MIDIBrowser.vue";
 
 const samplerLoaded = ref(false);
 
@@ -29,6 +31,8 @@ const pressedKeys = ref<Set<string>>(new Set());
 
 const midiEvents = ref<MidiEvent[]>([]);
 const isPlaying = ref<boolean>(false);
+const isManual = ref<boolean>(false);
+let midiUrl = ref<string>("");
 let midiPart: Tone.Part | null = null;
 
 const handleMIDIParsed = (events: MidiEvent[]): void => {
@@ -70,44 +74,54 @@ const togglePlayPause = async (): Promise<void> => {
 
   console.log("Toggling play/pause");
 
-  try {
-    await Tone.start();
+  if (isManual) {
+    const track = new MidiWriter.Track();
 
-    if (isPlaying.value) {
-      Tone.getTransport().pause();
-      isPlaying.value = false;
-    } else {
-      Tone.getTransport().stop();
-      Tone.getTransport().cancel();
+    const note = new MidiWriter.NoteEvent({pitch: Array.from(pressedKeys.value), duration: '1'})
+    track.addEvent(note)
 
-      if (midiPart) {
-        midiPart.dispose();
-        midiPart = null;
-      }
-
-      midiPart = new Tone.Part((time, event: MidiEvent) => {
-        if (event.type === 'noteOn') {
-          playNote(event.note);
-        } else if (event.type === 'noteOff') {
-          stopNote(event.note);
-        }
-      }, midiEvents.value).start(0);
-
-      Tone.getTransport().bpm.value = 120;
-
-      const endTime = Math.max(...midiEvents.value.map(event => event.time));
-
-      Tone.getTransport().scheduleOnce(() => {
-        stopAllNotes();
-        isPlaying.value = false;
-      }, endTime);
-
-      Tone.getTransport().start();
-      isPlaying.value = true;
-    }
-  } catch (error) {
-    console.error('Error toggling play/pause:', error);
+    const write = new MidiWriter.Writer(track)
+    midiUrl.value = write.dataUri();
   }
+
+  try {
+      await Tone.start();
+
+      if (isPlaying.value) {
+        Tone.getTransport().pause();
+        isPlaying.value = false;
+      } else {
+        Tone.getTransport().stop();
+        Tone.getTransport().cancel();
+
+        if (midiPart) {
+          midiPart.dispose();
+          midiPart = null;
+        }
+
+        midiPart = new Tone.Part((time, event: MidiEvent) => {
+          if (event.type === 'noteOn') {
+            playNote(event.note);
+          } else if (event.type === 'noteOff') {
+            stopNote(event.note);
+          }
+        }, midiEvents.value).start(0);
+
+        Tone.getTransport().bpm.value = 120;
+
+        const endTime = Math.max(...midiEvents.value.map(event => event.time));
+
+        Tone.getTransport().scheduleOnce(() => {
+          stopAllNotes();
+          isPlaying.value = false;
+        }, endTime);
+
+        Tone.getTransport().start();
+        isPlaying.value = true;
+      }
+    } catch (error) {
+      console.error('Error toggling play/pause:', error);
+    }
 };
 
 onMounted(() => {
@@ -118,17 +132,21 @@ onMounted(() => {
       midiPart.dispose();
       midiPart = null;
     }
+    midiUrl.value = '';
   };
 });
 
 const handleCellToggled = (payload: { noteId: string, isOn: boolean }) => {
   const { noteId, isOn } = payload;
+
   if (isOn) {
     pressedKeys.value.add(noteId);
   } else {
     pressedKeys.value.delete(noteId);
   }
   pressedKeys.value = new Set(pressedKeys.value);
+
+  isManual.value = pressedKeys.value.size > 0;
 };
 </script>
 
@@ -143,7 +161,9 @@ const handleCellToggled = (payload: { noteId: string, isOn: boolean }) => {
       :pressed-keys="pressedKeys"
       :toggle-play-pause="togglePlayPause"
       :is-playing="isPlaying"
+      :is-manual="isManual"
   />
+  <MIDIBrowser :midi-url="midiUrl" @midiParsed="handleMIDIParsed" />
 </template>
 
 <style scoped>
