@@ -120,11 +120,21 @@ onMounted(() => {
     }
   };
 });
+
+const handleCellToggled = ({ noteId, isOn }: { noteId: string, isOn: boolean }) => {
+  if (isOn) {
+    pressedKeys.value.add(noteId);
+  } else {
+    pressedKeys.value.delete(noteId);
+  }
+  pressedKeys.value = new Set(pressedKeys.value);
+};
 </script>
 
 <template>
   <MathsCanvas
     :pressedKeys="pressedKeys"
+    @cellToggled="handleCellToggled"
   />
   <Piano
       :handle-m-i-d-i-parsed="handleMIDIParsed"

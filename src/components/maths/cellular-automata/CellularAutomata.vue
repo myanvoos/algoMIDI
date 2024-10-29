@@ -7,6 +7,7 @@ const props = defineProps<{
   pressedKeys: Set<string>;
 }>();
 
+const emit = defineEmits(['cellToggled']);
 const offsetShift = 3; // Dynamic variable to control the shift amount
 
 const sketch = (p5: p5) => {
@@ -23,7 +24,7 @@ const sketch = (p5: p5) => {
   let nextCells: Cell[][] = [];
 
   p5.setup = () => {
-    p5.createCanvas(width, height);
+    p5.createCanvas(width, height).mouseClicked(handleMouseClick);
     p5.frameRate(10);
     p5.background("#233140");
 
@@ -60,7 +61,7 @@ const sketch = (p5: p5) => {
           p5.fill(255);
         }
 
-        p5.rect(shiftedColumn * cellSize, row * cellSize, cellSize, cellSize);
+        p5.square(shiftedColumn * cellSize, row * cellSize, cellSize);
 
         if (cell.isOn) {
           p5.fill(255);
@@ -70,7 +71,6 @@ const sketch = (p5: p5) => {
       }
     }
   };
-
 
   watch(
       () => props.pressedKeys,
@@ -88,6 +88,32 @@ const sketch = (p5: p5) => {
       },
       { deep: true }
   );
+
+  function handleMouseClick(): void {
+    const row = Math.floor(p5.mouseY / cellSize);
+
+    if (row < 0 || row >= rowCount) return;
+
+    const rowOffset = (row * offsetShift) % columnCount;
+    let adjustedMouseX = p5.mouseX - (rowOffset * cellSize);
+
+    if (adjustedMouseX < 0) {
+      adjustedMouseX += columnCount * cellSize;
+    }
+
+    const column = Math.floor(adjustedMouseX / cellSize) % columnCount;
+
+    if (column < 0 || column >= columnCount) return;
+
+    currentCells[row][column].isOn = !currentCells[row][column].isOn;
+
+    emit('cellToggled', {
+      noteId: currentCells[row][column].note.id,
+      isOn: currentCells[row][column].isOn,
+    });
+
+    p5.redraw();
+  }
 
   function initialiseStandardGrid(): Cell[][] {
     const grid: Cell[][] = [];
