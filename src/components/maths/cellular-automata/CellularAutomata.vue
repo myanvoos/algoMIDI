@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import p5 from "p5"
 import { Cell } from "../../../types/types.js";
+import {watch} from "vue";
+
+const props = defineProps<{
+  pressedKeys: Set<string>
+}>()
 
 const sketch = (p5: p5) => {
   let cellSize: number;
@@ -22,8 +27,8 @@ const sketch = (p5: p5) => {
 
     cellSize = Math.floor(width / columnCount);
 
-    currentCells = initialiseGrid();
-    nextCells = initialiseGrid();
+    currentCells = initialiseStandardGrid();
+    nextCells = initialiseStandardGrid();
 
     randomizeBoard();
 
@@ -32,14 +37,17 @@ const sketch = (p5: p5) => {
   };
 
   p5.draw = () => {
-    generate();
+    // generate(); - off for now
 
     for (let row = 0; row < rowCount; row++) {
       for (let column = 0; column < columnCount; column++) {
         let cell = currentCells[row][column];
 
-        if (!cell.isOn) p5.fill(255);
-        else p5.fill("#213547");
+        // if (!cell.isOn) p5.fill(255);
+        // else p5.fill("#213547");
+
+        if (props.pressedKeys.has(cell.note.id)) p5.fill("#213547")
+        else p5.fill(255)
 
         p5.stroke("slategray");
         p5.rect(column * cellSize, row * cellSize, cellSize, cellSize);
@@ -47,11 +55,15 @@ const sketch = (p5: p5) => {
     }
   };
 
-  p5.mousePressed = () => {
-    // TODO: Choose cell functionality
-    randomizeBoard();
-    p5.loop();
-  };
+  watch(() => props.pressedKeys, () => {
+    p5.redraw()
+  }, { deep: true })
+
+  // p5.mousePressed = () => {
+  //   // TODO: Choose cell functionality
+  //   randomizeBoard();
+  //   p5.loop();
+  // };
 
   function randomizeBoard() {
     for (let row = 0; row < rowCount; row++) {
@@ -62,7 +74,7 @@ const sketch = (p5: p5) => {
   }
 
   function generate() {
-    nextCells = initialiseGrid();
+    nextCells = initialiseStandardGrid();
 
     for (let row = 0; row < rowCount; row++) {
       for (let column = 0; column < columnCount; column++) {
@@ -100,7 +112,7 @@ const sketch = (p5: p5) => {
     nextCells = temp;
   }
 
-  function initialiseGrid(): Cell[][] {
+  function initialiseStandardGrid(): Cell[][] {
     const grid: Cell[][] = [];
 
     for (let i = 0; i < octaves.length; i++) {
