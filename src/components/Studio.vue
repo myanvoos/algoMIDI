@@ -37,7 +37,12 @@ let midiPart: Tone.Part | null = null;
 
 const handleMIDIParsed = (events: MidiEvent[]): void => {
   midiEvents.value = events;
+
+  const initialNotes: Set<string> = new Set(events.filter(e => e.type === 'noteOn' && e.time === 0).map(e => e.note))
   console.log("MIDI handled:", midiEvents.value);
+
+  pressedKeys.value = initialNotes;
+  isManual.value = false
 };
 
 const playNote = (note: string): void => {
@@ -73,50 +78,46 @@ const togglePlayPause = async (): Promise<void> => {
   if (!samplerLoaded.value) return;
   console.log("Toggling play/pause");
 
-  if (isManual.value) {
-    await Tone.start();
-    if (isPlaying.value) {
-      Tone.getTransport().pause();
-      isPlaying.value = false;
-    } else {
+  if (isPlaying.value) {
+    Tone.getTransport().pause()
+    isPlaying.value = false
+  } else {
+    if (isManual.value) {
+      await Tone.start();
       Tone.getTransport().start();
       isPlaying.value = true;
-    }
-  } else {
-    await Tone.start();
 
-    if (isPlaying.value) {
-      Tone.getTransport().pause();
-      isPlaying.value = false;
     } else {
+      await Tone.start();
+
       Tone.getTransport().stop();
       Tone.getTransport().cancel();
 
       if (midiPart) {
-        midiPart.dispose();
-        midiPart = null;
+          midiPart.dispose();
+          midiPart = null;
       }
 
       midiPart = new Tone.Part((time, event: MidiEvent) => {
-        if (event.type === 'noteOn') {
-          playNote(event.note);
-        } else if (event.type === 'noteOff') {
-          stopNote(event.note);
-        }
-      }, midiEvents.value).start(0);
+          if (event.type === 'noteOn') {
+            playNote(event.note);
+          } else if (event.type === 'noteOff') {
+            stopNote(event.note);
+          }
+        }, midiEvents.value).start(0);
 
-      Tone.getTransport().bpm.value = 120;
+        Tone.getTransport().bpm.value = 120;
 
-      const endTime = Math.max(...midiEvents.value.map(event => event.time));
+        const endTime = Math.max(...midiEvents.value.map(event => event.time));
 
-      Tone.getTransport().scheduleOnce(() => {
-        stopAllNotes();
-        isPlaying.value = false;
-      }, endTime);
+        Tone.getTransport().scheduleOnce(() => {
+          stopAllNotes();
+          isPlaying.value = false;
+        }, endTime);
 
-      Tone.getTransport().start();
-      isPlaying.value = true;
-    }
+        Tone.getTransport().start();
+      }
+    isPlaying.value = true;
   }
 };
 
@@ -130,7 +131,7 @@ const handleCellToggled = (payload: { noteId: string, isOn: boolean }) => {
 
 const handleGridUpdated = (activeNotes: Set<string>) => {
   if (!samplerLoaded.value) return
-  activeNotes.forEach((note) => grandPianoSampler.triggerAttackRelease(note, '1m'))
+  if (isManual.value) activeNotes.forEach((note) => grandPianoSampler.triggerAttackRelease(note, '1m'))
 }
 
 onUnmounted(() => {

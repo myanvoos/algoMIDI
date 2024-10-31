@@ -45,10 +45,9 @@ const sketch = (p5: p5) => {
   };
 
   p5.draw = () => {
-    if (props.isPlaying) {
+    if (props.isPlaying && props.isManual) {
       updateCellularAutomata();
     }
-
     p5.background('#233140');
     drawGrid();
   }
@@ -87,10 +86,24 @@ const sketch = (p5: p5) => {
   };
 
   watch(
+      () => props.isManual,
+      (newVal) => {
+        if (newVal) {
+          // In manual mode, the grid updates via cellular automata
+          if (props.isPlaying) {
+            p5.loop();
+          }
+        } else {
+          // In MIDI mode, stop the p5.js loop to prevent grid updates
+          p5.noLoop();
+        }
+      }
+  );
+
+  watch(
       () => props.pressedKeys,
       () => {
         if (props.isPlaying) {
-          console.log("copying old grid")
           prevCells = copyGrid(currentCells);
 
           for (let row = 0; row < rowCount; row++) {
