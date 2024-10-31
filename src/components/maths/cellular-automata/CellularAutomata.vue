@@ -102,18 +102,16 @@ const sketch = (p5: p5) => {
 
   watch(
       () => props.pressedKeys,
-      () => {
-        if (props.isPlaying) {
-          prevCells = copyGrid(currentCells);
-
+      (newPressedKeys) => {
+        if (!props.isManual) {
           for (let row = 0; row < rowCount; row++) {
             for (let column = 0; column < columnCount; column++) {
               const cell = currentCells[row][column];
-              cell.isOn = props.pressedKeys.has(cell.note.id);
+              cell.isOn = newPressedKeys.has(cell.note.id);
             }
           }
-        }
         p5.redraw();
+        }
       },
       { deep: true }
   );
@@ -130,22 +128,24 @@ const sketch = (p5: p5) => {
   );
 
   function handleMouseClick(): void {
-    const row = Math.floor(p5.mouseY / cellSize);
-    if (row < 0 || row >= rowCount) return;
+    if (!props.isPlaying) {
+      const row = Math.floor(p5.mouseY / cellSize);
+      if (row < 0 || row >= rowCount) return;
 
-    const rowOffset = (row * offsetShift) % columnCount;
-    let adjustedMouseX = p5.mouseX - (rowOffset * cellSize);
-    if (adjustedMouseX < 0) adjustedMouseX += columnCount * cellSize;
+      const rowOffset = (row * offsetShift) % columnCount;
+      let adjustedMouseX = p5.mouseX - (rowOffset * cellSize);
+      if (adjustedMouseX < 0) adjustedMouseX += columnCount * cellSize;
 
-    const column = Math.floor(adjustedMouseX / cellSize) % columnCount;
-    if (column < 0 || column >= columnCount) return;
+      const column = Math.floor(adjustedMouseX / cellSize) % columnCount;
+      if (column < 0 || column >= columnCount) return;
 
-    currentCells[row][column].isOn = !currentCells[row][column].isOn;
-    emit('cellToggled', {
-      noteId: currentCells[row][column].note.id,
-      isOn: currentCells[row][column].isOn,
-    });
-    p5.redraw();
+      currentCells[row][column].isOn = !currentCells[row][column].isOn;
+      emit('cellToggled', {
+        noteId: currentCells[row][column].note.id,
+        isOn: currentCells[row][column].isOn,
+      });
+      p5.redraw();
+    }
   }
 
   function initialiseGrid(): Cell[][] {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Piano from "./piano/Piano.vue";
 import MathsCanvas from "./maths/MathsCanvas.vue";
-import {onUnmounted, ref} from 'vue';
+import {computed, onUnmounted, ref} from 'vue';
 import * as Tone from 'tone';
 import {MidiEvent} from "../types/types";
 
@@ -23,11 +23,24 @@ const grandPianoSampler = new Tone.Sampler({
   }
 }).toDestination();
 
+// NOTE:
 // Use Set instead of Array for storing pressed keys, for O(1) lookup time.
 // Certain conditions are satisfied:
 // - The keys are unique values without duplication
 // - The order of pressed keys is not important. Multiple pressed keys form a chord.
+
+// - pressedKeys: Direct user interactions. Purpose is to represent the notes that a user actively presses or toggles
+// - In Manual Mode, is what user wants to play or highlight on the grid. Changes cause highlights on the piano keys
+// - In MIDI Mode, no effects
 const pressedKeys = ref<Set<string>>(new Set());
+
+// - gridActiveKeys: Updates in sync with cellular automata logic
+// - In Manual Mode, reflects which cells are active as the logic updates the grid's cell FREE OF USER INPUTS
+// - In MIDI Mode, displays the active notes in sync with MIDI file without triggering cellular automata logic
+const gridActiveKeys = ref<Set<string>>(new Set())
+const displayedKeys = computed(() => {
+  return isManual.value ? gridActiveKeys.value : pressedKeys.value;
+});
 
 const midiEvents = ref<MidiEvent[]>([]);
 const isPlaying = ref<boolean>(false);
@@ -42,6 +55,7 @@ const handleMIDIParsed = (events: MidiEvent[]): void => {
   console.log("MIDI handled:", midiEvents.value);
 
   pressedKeys.value = initialNotes;
+  gridActiveKeys.value = initialNotes
   isManual.value = false
 };
 
@@ -123,6 +137,7 @@ const togglePlayPause = async (): Promise<void> => {
 
 const handleCellToggled = (payload: { noteId: string, isOn: boolean }) => {
   const { noteId, isOn } = payload;
+  console.log("cell toggled")
   if (isOn) pressedKeys.value.add(noteId);
   else pressedKeys.value.delete(noteId);
   pressedKeys.value = new Set(pressedKeys.value);
@@ -131,7 +146,10 @@ const handleCellToggled = (payload: { noteId: string, isOn: boolean }) => {
 
 const handleGridUpdated = (activeNotes: Set<string>) => {
   if (!samplerLoaded.value) return
-  if (isManual.value) activeNotes.forEach((note) => grandPianoSampler.triggerAttackRelease(note, '1m'))
+  if (isManual.value) {
+    activeNotes.forEach((note) => grandPianoSampler.triggerAttackRelease(note, '1m'))
+    gridActiveKeys.value = activeNotes
+  }
 }
 
 onUnmounted(() => {
@@ -149,14 +167,14 @@ onUnmounted(() => {
 
 <template>
   <MathsCanvas
-    :pressedKeys="pressedKeys"
+    :pressedKeys="displayedKeys"
     @cellToggled="handleCellToggled"
     @gridUpdated="handleGridUpdated"
     :isPlaying="isPlaying"
     :isManual="isManual"
   />
   <Piano
-      :pressed-keys="pressedKeys"
+      :pressed-keys="gridActiveKeys"
       @togglePlayPause="togglePlayPause"
       @midiParsed="handleMIDIParsed"
       :is-playing="isPlaying"
