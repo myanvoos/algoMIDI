@@ -1,45 +1,59 @@
 <script setup lang="ts">
 import p5 from "p5";
-import { Cell } from "../../../types/types.js";
-import { watch } from "vue";
+import {Cell} from "../../../types/types.js";
+import {watch} from "vue";
 
 const props = defineProps<{
   pressedKeys: Set<string>;
+  isManual: boolean;
+  isPlaying: boolean;
 }>();
 
-const emit = defineEmits(['cellToggled']);
-const offsetShift = 3; // Dynamic variable to control the shift amount
+const emit = defineEmits<{
+  (e: 'cellToggled', payload: { noteId: string; isOn: boolean}): void
+  (e: 'gridUpdated', activeNotes: Set<string>): void
+}>()
 
 const sketch = (p5: p5) => {
   let cellSize: number;
   let width: number = 700;
   let height: number = 400;
 
+  const offsetShift = 3; // Dynamic variable to control the shift amount
+
   const octaves = [1, 2, 3, 4, 5, 6, 7];
   const baseNotes = ["A#", "A", "B#", "B", "C", "D#", "D", "E#", "E", "F", "G#", "G"];
   const columnCount: number = baseNotes.length;
   const rowCount: number = octaves.length;
+  
   let prevCells: Cell[][] = [];
   let currentCells: Cell[][] = [];
   let nextCells: Cell[][] = [];
 
   p5.setup = () => {
     p5.createCanvas(width, height).mouseClicked(handleMouseClick);
-    p5.frameRate(10);
+    p5.frameRate(1);
     p5.background("#233140");
 
     cellSize = Math.floor(width / columnCount);
 
-    currentCells = initialiseStandardGrid();
-    nextCells = initialiseStandardGrid();
-    prevCells = initialiseStandardGrid();
+    currentCells = initialiseGrid();
+    nextCells = initialiseGrid();
+    prevCells = initialiseGrid();
 
     p5.noLoop();
-    p5.describe("Grid with each row shifted to the right by offsetShift cells.");
   };
 
   p5.draw = () => {
-    p5.background("#233140");
+    if (props.isPlaying) {
+      updateCellularAutomata();
+    }
+
+    p5.background('#233140');
+    drawGrid();
+  }
+
+  const drawGrid = () => {
 
     p5.stroke("slategray");
     p5.textAlign(p5.CENTER, p5.CENTER);
@@ -75,47 +89,53 @@ const sketch = (p5: p5) => {
   watch(
       () => props.pressedKeys,
       () => {
-        prevCells = copyGrid(currentCells);
+        if (props.isPlaying) {
+          console.log("copying old grid")
+          prevCells = copyGrid(currentCells);
 
-        for (let row = 0; row < rowCount; row++) {
-          for (let column = 0; column < columnCount; column++) {
-            const cell = currentCells[row][column];
-            cell.isOn = props.pressedKeys.has(cell.note.id);
+          for (let row = 0; row < rowCount; row++) {
+            for (let column = 0; column < columnCount; column++) {
+              const cell = currentCells[row][column];
+              cell.isOn = props.pressedKeys.has(cell.note.id);
+            }
           }
         }
-
         p5.redraw();
       },
       { deep: true }
   );
 
+  watch(
+      () => props.isPlaying,
+      (newVal) => {
+        if (newVal) {
+          p5.loop();
+        } else {
+          p5.noLoop();
+        }
+      }
+  );
+
   function handleMouseClick(): void {
     const row = Math.floor(p5.mouseY / cellSize);
-
     if (row < 0 || row >= rowCount) return;
 
     const rowOffset = (row * offsetShift) % columnCount;
     let adjustedMouseX = p5.mouseX - (rowOffset * cellSize);
-
-    if (adjustedMouseX < 0) {
-      adjustedMouseX += columnCount * cellSize;
-    }
+    if (adjustedMouseX < 0) adjustedMouseX += columnCount * cellSize;
 
     const column = Math.floor(adjustedMouseX / cellSize) % columnCount;
-
     if (column < 0 || column >= columnCount) return;
 
     currentCells[row][column].isOn = !currentCells[row][column].isOn;
-
     emit('cellToggled', {
       noteId: currentCells[row][column].note.id,
       isOn: currentCells[row][column].isOn,
     });
-
     p5.redraw();
   }
 
-  function initialiseStandardGrid(): Cell[][] {
+  function initialiseGrid(): Cell[][] {
     const grid: Cell[][] = [];
 
     for (let i = 0; i < octaves.length; i++) {
@@ -139,26 +159,12 @@ const sketch = (p5: p5) => {
     return grid.map(row => row.map(cell => ({...cell, note: {...cell.note } })))
   }
 
-  function generate() {
-    nextCells = initialiseStandardGrid();
-
+  const updateCellularAutomata = () => {
+    nextCells = initialiseGrid();
+    const activeNotes: Set<string> = new Set<string>()
     for (let row = 0; row < rowCount; row++) {
       for (let column = 0; column < columnCount; column++) {
-
-        let left = (column - 1 + columnCount) % columnCount;
-        let right = (column + 1) % columnCount;
-        let above = (row - 1 + rowCount) % rowCount;
-        let below = (row + 1) % rowCount;
-
-        let neighbours =
-            (currentCells[above][left].isOn ? 1 : 0) +
-            (currentCells[above][column].isOn ? 1 : 0) +
-            (currentCells[above][right].isOn ? 1 : 0) +
-            (currentCells[row][left].isOn ? 1 : 0) +
-            (currentCells[row][right].isOn ? 1 : 0) +
-            (currentCells[below][left].isOn ? 1 : 0) +
-            (currentCells[below][column].isOn ? 1 : 0) +
-            (currentCells[below][right].isOn ? 1 : 0);
+        const neighbours = countNeighbours(row, column)
 
         // TODO: Custom cellular automata rules
         const cellIsOn = currentCells[row][column].isOn;
@@ -169,13 +175,31 @@ const sketch = (p5: p5) => {
         } else {
           nextCells[row][column].isOn = cellIsOn;
         }
+        if (nextCells[row][column].isOn) activeNotes.add(nextCells[row][column].note.id)
       }
     }
 
-    // Swap the current and next arrays for the next generation
     let temp = currentCells;
     currentCells = nextCells;
     nextCells = temp;
+    if (props.isManual) emit('gridUpdated', activeNotes);
+    p5.redraw();
+  }
+
+  const countNeighbours = (row: number, column: number): number => {
+    let left = (column - 1 + columnCount) % columnCount;
+    let right = (column + 1) % columnCount;
+    let above = (row - 1 + rowCount) % rowCount;
+    let below = (row + 1) % rowCount;
+
+    return (currentCells[above][left].isOn ? 1 : 0) +
+        (currentCells[above][column].isOn ? 1 : 0) +
+        (currentCells[above][right].isOn ? 1 : 0) +
+        (currentCells[row][left].isOn ? 1 : 0) +
+        (currentCells[row][right].isOn ? 1 : 0) +
+        (currentCells[below][left].isOn ? 1 : 0) +
+        (currentCells[below][column].isOn ? 1 : 0) +
+        (currentCells[below][right].isOn ? 1 : 0)
   }
 };
 </script>

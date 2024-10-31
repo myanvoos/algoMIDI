@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import Piano from "./piano/Piano.vue";
 import MathsCanvas from "./maths/MathsCanvas.vue";
-import {onMounted, ref} from 'vue';
+import {onUnmounted, ref} from 'vue';
 import * as Tone from 'tone';
 import {MidiEvent} from "../types/types";
-import MidiWriter from 'midi-writer-js';
+
 import MIDIBrowser from "./MIDIBrowser.vue";
 
 const samplerLoaded = ref(false);
@@ -71,60 +71,69 @@ const stopAllNotes = (): void => {
 
 const togglePlayPause = async (): Promise<void> => {
   if (!samplerLoaded.value) return;
-
   console.log("Toggling play/pause");
 
-  if (isManual) {
-    const track = new MidiWriter.Track();
-
-    const note = new MidiWriter.NoteEvent({pitch: Array.from(pressedKeys.value), duration: '1'})
-    track.addEvent(note)
-
-    const write = new MidiWriter.Writer(track)
-    midiUrl.value = write.dataUri();
-  }
-
-  try {
-      await Tone.start();
-
-      if (isPlaying.value) {
-        Tone.getTransport().pause();
-        isPlaying.value = false;
-      } else {
-        Tone.getTransport().stop();
-        Tone.getTransport().cancel();
-
-        if (midiPart) {
-          midiPart.dispose();
-          midiPart = null;
-        }
-
-        midiPart = new Tone.Part((time, event: MidiEvent) => {
-          if (event.type === 'noteOn') {
-            playNote(event.note);
-          } else if (event.type === 'noteOff') {
-            stopNote(event.note);
-          }
-        }, midiEvents.value).start(0);
-
-        Tone.getTransport().bpm.value = 120;
-
-        const endTime = Math.max(...midiEvents.value.map(event => event.time));
-
-        Tone.getTransport().scheduleOnce(() => {
-          stopAllNotes();
-          isPlaying.value = false;
-        }, endTime);
-
-        Tone.getTransport().start();
-        isPlaying.value = true;
-      }
-    } catch (error) {
-      console.error('Error toggling play/pause:', error);
+  if (isManual.value) {
+    await Tone.start();
+    if (isPlaying.value) {
+      Tone.getTransport().pause();
+      isPlaying.value = false;
+    } else {
+      Tone.getTransport().start();
+      isPlaying.value = true;
     }
+  } else {
+    await Tone.start();
+
+    if (isPlaying.value) {
+      Tone.getTransport().pause();
+      isPlaying.value = false;
+    } else {
+      Tone.getTransport().stop();
+      Tone.getTransport().cancel();
+
+      if (midiPart) {
+        midiPart.dispose();
+        midiPart = null;
+      }
+
+      midiPart = new Tone.Part((time, event: MidiEvent) => {
+        if (event.type === 'noteOn') {
+          playNote(event.note);
+        } else if (event.type === 'noteOff') {
+          stopNote(event.note);
+        }
+      }, midiEvents.value).start(0);
+
+      Tone.getTransport().bpm.value = 120;
+
+      const endTime = Math.max(...midiEvents.value.map(event => event.time));
+
+      Tone.getTransport().scheduleOnce(() => {
+        stopAllNotes();
+        isPlaying.value = false;
+      }, endTime);
+
+      Tone.getTransport().start();
+      isPlaying.value = true;
+    }
+  }
 };
 
-onMounted(() => {
+const handleCellToggled = (payload: { noteId: string, isOn: boolean }) => {
+  const { noteId, isOn } = payload;
+  if (isOn) pressedKeys.value.add(noteId);
+  else pressedKeys.value.delete(noteId);
+  pressedKeys.value = new Set(pressedKeys.value);
+  isManual.value = pressedKeys.value.size > 0;
+};
+
+const handleGridUpdated = (activeNotes: Set<string>) => {
+  if (!samplerLoaded.value) return
+  activeNotes.forEach((note) => grandPianoSampler.triggerAttackRelease(note, '1m'))
+}
+
+onUnmounted(() => {
   return () => {
     Tone.getTransport().stop();
     Tone.getTransport().cancel();
@@ -135,31 +144,20 @@ onMounted(() => {
     midiUrl.value = '';
   };
 });
-
-const handleCellToggled = (payload: { noteId: string, isOn: boolean }) => {
-  const { noteId, isOn } = payload;
-
-  if (isOn) {
-    pressedKeys.value.add(noteId);
-  } else {
-    pressedKeys.value.delete(noteId);
-  }
-  pressedKeys.value = new Set(pressedKeys.value);
-
-  isManual.value = pressedKeys.value.size > 0;
-};
 </script>
 
 <template>
   <MathsCanvas
     :pressedKeys="pressedKeys"
     @cellToggled="handleCellToggled"
-    :handle-cell-toggled="handleCellToggled"
+    @gridUpdated="handleGridUpdated"
+    :isPlaying="isPlaying"
+    :isManual="isManual"
   />
   <Piano
-      :handle-m-i-d-i-parsed="handleMIDIParsed"
       :pressed-keys="pressedKeys"
-      :toggle-play-pause="togglePlayPause"
+      @togglePlayPause="togglePlayPause"
+      @midiParsed="handleMIDIParsed"
       :is-playing="isPlaying"
       :is-manual="isManual"
   />

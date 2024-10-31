@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import Piano from "./components/piano/Piano.vue";
-import MathCanvas from "./components/maths/MathsCanvas.vue";
 import Studio from "./components/Studio.vue";
+
 </script>
 
 <template>
   <div class="flex flex-col justify-between overflow-hidden">
     <Studio />
+
   </div>
 </template>
 
