@@ -4,6 +4,7 @@
         :pressed-keys="props.pressedKeys"
         @cellToggled="cellToggled"
         @gridUpdated="gridUpdated"
+        @gridIsClear="gridIsClear"
         :is-manual="props.isManual"
         :is-playing="props.isPlaying"
     />
@@ -22,6 +23,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'cellToggled', payload: { noteId: string; isOn: boolean }): void
   (e: 'gridUpdated', activeNotes: Set<string>): void
+  (e: 'gridIsClear'): void
 }>()
 
 const cellToggled = (payload: { noteId: string; isOn: boolean }) => {
@@ -31,6 +33,10 @@ const cellToggled = (payload: { noteId: string; isOn: boolean }) => {
 const gridUpdated = (activeNotes: Set<string>) => {
   emit('gridUpdated', activeNotes);
 };
+
+const gridIsClear = () => {
+  emit('gridIsClear');
+}
 // TODO: Add chess and Collatz view
 </script>
 

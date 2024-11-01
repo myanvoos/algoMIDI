@@ -1,6 +1,6 @@
 <!-- Piano.vue -->
 <template>
-  <div class="flex items-center justify-center p-4">
+  <div class="flex items-center justify-center">
     <div class="rounded-lg shadow-xl p-6 w-fit">
       <PianoKeys :pressed-keys="props.pressedKeys" />
 

@@ -13,6 +13,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'cellToggled', payload: { noteId: string; isOn: boolean}): void
   (e: 'gridUpdated', activeNotes: Set<string>): void
+  (e: 'gridIsClear'): void
 }>()
 
 const sketch = (p5: p5) => {
@@ -44,7 +45,7 @@ const sketch = (p5: p5) => {
 
   p5.draw = () => {
     if (props.isPlaying && props.isManual) {
-      updateCellularAutomata();
+      updateCellularAutomata()
     }
     p5.background('#233140');
     drawGrid();
@@ -123,7 +124,7 @@ const sketch = (p5: p5) => {
       }
   );
 
-  function handleMouseClick(): void {
+  const handleMouseClick = (): void => {
     if (!props.isPlaying) {
       const row = Math.floor(p5.mouseY / cellSize);
       if (row < 0 || row >= rowCount) return;
@@ -202,6 +203,7 @@ const sketch = (p5: p5) => {
     for (const { noteId } of rightmostNewAliveNotes.values()) {
       activeNotes.add(noteId);
     }
+    if (activeNotes.size === 0) emit('gridIsClear')
     if (props.isManual) emit('gridUpdated', activeNotes);
 
     // TODO: Exit conditions check

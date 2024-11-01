@@ -154,6 +154,13 @@ const handleGridUpdated = (activeNotes: Set<string>) => {
   }
 }
 
+const handleGridIsClear = () => {
+  isPlaying.value = false;
+  isManual.value = false;
+  pressedKeys.value.clear();
+  gridActiveKeys.value.clear()
+}
+
 onUnmounted(() => {
   return () => {
     Tone.getTransport().stop();
@@ -163,8 +170,6 @@ onUnmounted(() => {
       midiPart = null;
     }
     midiUrl.value = '';
-    // isPlaying.value = false
-    // isManual.value = false
   };
 });
 </script>
@@ -174,6 +179,7 @@ onUnmounted(() => {
     :pressedKeys="displayedKeys"
     @cellToggled="handleCellToggled"
     @gridUpdated="handleGridUpdated"
+    @gridIsClear="handleGridIsClear"
     :isPlaying="isPlaying"
     :isManual="isManual"
   />
