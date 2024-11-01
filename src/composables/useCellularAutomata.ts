@@ -96,5 +96,6 @@ export function useCellularAutomata(config: AutomataConfig) {
         rowCount,
         columnCount,
         updateAutomata,
+        countNeighbours // for testing
     }
 }
