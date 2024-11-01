@@ -3,7 +3,7 @@ import { createNoteGrid } from '../data/musicalModes'
 import { Cell, AutomataConfig } from '../types/types'
 
 export function useCellularAutomata(config: AutomataConfig) {
-    const currentCells = ref<Cell[][]>(createNoteGrid(config.scale, config.rootNote, config.gridSize))
+    const currentCells = ref<Cell[][]>(createNoteGrid(config))
     const nextCells = ref<Cell[][]>([])
 
     const rowCount = computed(() => currentCells.value.length)
@@ -71,7 +71,8 @@ export function useCellularAutomata(config: AutomataConfig) {
 
                 if (cellIsOn && (neighbours < 2 || neighbours > 3)) newCellState = false
                 else if (!cellIsOn && neighbours === 3) newCellState = true
-                else nextCells.value[row][column].isOn = newCellState
+
+                nextCells.value[row][column].isOn = newCellState
 
                 if (!cellIsOn && newCellState) {
                     if (
@@ -87,8 +88,7 @@ export function useCellularAutomata(config: AutomataConfig) {
             }
         }
         markRightmostCells(rightmostNewAliveNotes)
-        [currentCells.value, nextCells.value] = [nextCells.value, currentCells.value]
-
+        currentCells.value = deepCloneCells(nextCells.value);
         return getActiveNotes(rightmostNewAliveNotes)
     }
     return {

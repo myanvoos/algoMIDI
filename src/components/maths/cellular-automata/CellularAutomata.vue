@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import {ref, watch, onMounted, Ref} from 'vue'
 import p5 from 'p5'
 import { useP5Canvas } from '../../../composables/useP5Canvas'
 import { useCellularAutomata } from '../../../composables/useCellularAutomata'
@@ -16,7 +16,7 @@ const emit = defineEmits<{
   (e: 'gridIsClear'): void
 }>()
 
-const automataConfig: AutomataConfig = ref<AutomataConfig>({
+const automataConfig: Ref<AutomataConfig> = ref<AutomataConfig>({
   gridSize: 11,
   scale: 'minor',
   rootNote: 'C',
@@ -30,7 +30,7 @@ const {
 } = useCellularAutomata(automataConfig.value)
 
 const cellSize = ref(0)
-const canvasConfig: P5CanvasConfig = ref<P5CanvasConfig>({
+const canvasConfig: Ref<P5CanvasConfig> = ref<P5CanvasConfig>({
   width: 500,
   height: 500,
   frameRate: 3,
@@ -78,7 +78,8 @@ const sketch = (p5: p5) => {
         )
 
         if (cell.isOn) {
-          p5.fill(cell.isRightmostChild ? '#213547' : 255)
+          if (cell.isRightmostChild) p5.fill('#213547')
+          else p5.fill(255)
           p5.text(
               `${cell.note.id}`,
               currentColumn * cellSize.value + cellSize.value / 2,

@@ -4,9 +4,8 @@ import {ref} from "vue";
 
 export interface AutomataConfig {
     gridSize: number;
-    scale: string;
+    scale: "major" | "minor" | "chromatic";
     rootNote: string;
-    frameRate: number;
 }
 
 export interface P5CanvasConfig {
