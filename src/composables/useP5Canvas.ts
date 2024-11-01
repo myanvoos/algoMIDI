@@ -1,5 +1,6 @@
 import {Ref} from "vue";
 import {Cell} from "../types/types";
+import p5 from "p5";
 
 interface P5CanvasConfig {
     width: number
@@ -16,7 +17,7 @@ interface P5CanvasOptions {
 }
 
 export function useP5Canvas(options: P5CanvasOptions) {
-    const p5Instance = ref<P5CanvasInstance | null>(null);
+    const p5Instance = ref<p5 | null>(null);
     const cellSize = ref(0);
 
     const initCanvas = (config: P5CanvasConfig) => {
