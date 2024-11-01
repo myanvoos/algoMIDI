@@ -1,20 +1,3 @@
-<template>
-  <div class="piano">
-    <div
-        v-for="(note, index) in whiteKeys"
-        :key="index"
-        :class="['white-key', props.pressedKeys.has(note.id) ? 'active' : '']"
-    ></div>
-
-    <div
-        v-for="(note, index) in blackKeys"
-        :key="index"
-        :class="['black-key', props.pressedKeys.has(note.id) ? 'active' : '']"
-        :style="{ left: `${getBlackKeyPosition(index)}%` }"
-    ></div>
-
-  </div>
-</template>
 
 <script setup lang="ts">
 import {fullKeyboard} from "../../data/keyboardData.ts";
@@ -29,10 +12,10 @@ const whiteKeys = computed(() => fullKeyboard.filter(note => !note.baseNote.isSh
 const blackKeys = computed(() => fullKeyboard.filter(note => note.baseNote.isSharp));
 
 const getBlackKeyPosition = (index: number): number => {
-    const blackKeyPattern = ['C#', 'D#', 'F#', 'G#', 'A#'];
+  const blackKeyPattern = ['C#', 'D#', 'F#', 'G#', 'A#'];
 
-    const totalWhiteKeys = whiteKeys.value.length;
-    const whiteKeyWidth = 100 / totalWhiteKeys; // This is percentage width
+  const totalWhiteKeys = whiteKeys.value.length;
+  const whiteKeyWidth = 100 / totalWhiteKeys; // This is percentage width
 
   let blackKeyCount = 0;
   let position = 0;
@@ -53,6 +36,24 @@ const getBlackKeyPosition = (index: number): number => {
 }
 
 </script>
+
+<template>
+  <div class="piano">
+    <div
+        v-for="(note, index) in whiteKeys"
+        :key="index"
+        :class="['white-key', props.pressedKeys.has(note.id) ? 'active' : '']"
+    ></div>
+
+    <div
+        v-for="(note, index) in blackKeys"
+        :key="index"
+        :class="['black-key', props.pressedKeys.has(note.id) ? 'active' : '']"
+        :style="{ left: `${getBlackKeyPosition(index)}%` }"
+    ></div>
+
+  </div>
+</template>
 
 <style scoped>
 .piano {

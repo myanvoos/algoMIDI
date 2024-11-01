@@ -1,24 +1,13 @@
 <script setup lang="ts">
-import Piano from "./piano/Piano.vue";
-import MathsCanvas from "./maths/MathsCanvas.vue";
-import {computed, onUnmounted, ref} from 'vue';
-import * as Tone from 'tone';
+import Piano from "./piano/Piano.vue"
+import MathsCanvas from "./maths/MathsCanvas.vue"
+import {onUnmounted, ref} from 'vue'
+import * as Tone from 'tone'
+import {usePianoSampler} from "../composables/usePianoSampler.ts"
+import {useTransport} from "../composables/useTransport.ts";
 
-const samplerLoaded = ref(false);
-
-const grandPianoSampler = new Tone.Sampler({
-  urls: {
-    'C4': 'C4.mp3',  // Tone.js will interpolate the rest of the notes
-    'G4': 'G4.mp3',
-    'C5': 'C5.mp3'
-  },
-  release: 1,
-  baseUrl: "/samples/piano/", // Using base grand piano sampler for now
-  onload: () => {
-    console.log("Sampler loaded successfully");
-    samplerLoaded.value = true;
-  }
-}).toDestination();
+const { sampler, samplerLoaded, samplerError } = usePianoSampler()
+const { isPlaying, togglePlayPause, transportError, cleanup } = useTransport()
 
 // NOTE:
 // Use Set instead of Array for storing pressed keys, for O(1) lookup time.
@@ -26,50 +15,42 @@ const grandPianoSampler = new Tone.Sampler({
 // - The keys are unique values without duplication
 // - The order of pressed keys is not important. Multiple pressed keys form a chord.
 
-const pressedKeys = ref<Set<string>>(new Set());
-const isPlaying = ref<boolean>(false);
-
-const togglePlayPause = async (): Promise<void> => {
-  if (!samplerLoaded.value) return;
-  console.log("Toggling play/pause");
-
-  if (isPlaying.value) {
-    Tone.getTransport().pause()
-    isPlaying.value = false
-  } else {
-    await Tone.start();
-    Tone.getTransport().start();
-    isPlaying.value = true;
-  }
-};
+const pressedKeys = ref<Set<string>>(new Set())
 
 const handleCellToggled = (payload: { noteId: string, isOn: boolean }) => {
-  const { noteId, isOn } = payload;
-  if (isOn) pressedKeys.value.add(noteId);
-  else pressedKeys.value.delete(noteId);
-  pressedKeys.value = new Set(pressedKeys.value);
+  if (payload.isOn) pressedKeys.value.add(payload.noteId)
+  else pressedKeys.value.delete(payload.noteId)
+  pressedKeys.value = new Set(pressedKeys.value)
 };
 
 const handleGridUpdated = (activeNotes: Set<string>) => {
   if (!samplerLoaded.value) return
-  activeNotes.forEach((note) => grandPianoSampler.triggerAttackRelease(note, '1m'))
-  pressedKeys.value = activeNotes
+  try {
+    activeNotes.forEach((note) => sampler.triggerAttackRelease(note, '1m'))
+    pressedKeys.value = activeNotes
+  } catch (err) {
+    console.error("Error playing notes:", err)
+  }
 }
 
 const handleGridIsClear = () => {
-  isPlaying.value = false;
-  pressedKeys.value.clear();
+  isPlaying.value = false
+  pressedKeys.value.clear()
 }
 
-onUnmounted(() => {
-  return () => {
-    Tone.getTransport().stop();
-    Tone.getTransport().cancel();
-  };
-});
+onUnmounted(cleanup)
 </script>
 
 <template>
+  <div class="studio-container">
+    <div v-if="samplerError || transportError" class="error-banner">
+      Error: {{ samplerError?.message || transportError?.message }}
+    </div>
+    <div v-if="!samplerLoaded"  class="loading-banner">
+      Loading sound samples...
+    </div>
+  </div>
+
   <MathsCanvas
     :pressedKeys="pressedKeys"
     @cellToggled="handleCellToggled"
@@ -79,11 +60,18 @@ onUnmounted(() => {
   />
   <Piano
       :pressed-keys="pressedKeys"
-      @togglePlayPause="togglePlayPause"
-      :is-playing="isPlaying"
+      :disabled="!samplerLoaded"
   />
 </template>
 
 <style scoped>
-
+.studio-container {
+  @apply min-w-[1200px] flex flex-col items-center gap-3
+}
+.error-banner {
+  @apply w-full bg-slate-500 text-slate-100 p-4 text-center rounded
+}
+.loading-banner {
+  @apply w-full bg-blue-100 text-blue-700 p-4 text-center rounded mb-3
+}
 </style>

@@ -19,24 +19,24 @@ const DEFAULT_SAMPLER_CONFIG: SamplerConfig = {
 }
 
 export function usePianoSampler(config: SamplerConfig = DEFAULT_SAMPLER_CONFIG) {
-    const isLoaded = ref(false)
-    const error = ref<Error | null>(null);
+    const samplerLoaded = ref(false)
+    const samplerError = ref<Error | null>(null);
 
     const sampler = new Tone.Sampler({
         ...config,
         onload: () => {
             console.log("Sampler loaded successfully");
-            isLoaded.value = true;
+            samplerLoaded.value = true;
         },
         onerror: (err) => {
             console.error("Error loading sampler:", err);
-            error.value = err;
+            samplerError.value = err;
         }
     }).toDestination()
 
     return {
         sampler,
-        isLoaded,
-        error
+        samplerLoaded,
+        samplerError
     }
 }
