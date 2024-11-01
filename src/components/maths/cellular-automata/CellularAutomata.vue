@@ -2,11 +2,10 @@
 import p5 from "p5";
 import {Cell} from "../../../types/types.js";
 import {watch} from "vue";
-import {createNoteGrid} from "./musicalModes.ts";
+import { createNoteGrid } from "../../../data/musicalModes.ts";
 
 const props = defineProps<{
   pressedKeys: Set<string>;
-  isManual: boolean;
   isPlaying: boolean;
 }>();
 
@@ -26,9 +25,9 @@ const sketch = (p5: p5) => {
 
   const gridSize = 11
 
-  const matrix = createNoteGrid('minor', 'C', gridSize)
-  const columnCount = gridSize
-  const rowCount = gridSize
+  let matrix = createNoteGrid('minor', 'C', gridSize)
+  const columnCount = matrix[0].length
+  const rowCount = matrix.length
 
   p5.setup = () => {
     p5.createCanvas(width, height).mouseClicked(handleMouseClick);
@@ -44,7 +43,7 @@ const sketch = (p5: p5) => {
   };
 
   p5.draw = () => {
-    if (props.isPlaying && props.isManual) {
+    if (props.isPlaying) {
       updateCellularAutomata()
     }
     p5.background('#233140');
@@ -52,13 +51,11 @@ const sketch = (p5: p5) => {
   }
 
   const drawGrid = () => {
-
     p5.stroke("slategray");
     p5.textAlign(p5.CENTER, p5.CENTER);
-    p5.textSize(cellSize / 3); // Adjust text size relative to cell size
+    p5.textSize(cellSize / 3);
 
     for (let row = 0; row < rowCount; row++) {
-
       for (let column = 0; column < columnCount; column++) {
         const cell = currentCells[row][column];
         const currentColumn = column % columnCount;
@@ -81,37 +78,6 @@ const sketch = (p5: p5) => {
       }
     }
   };
-
-  watch(
-      () => props.isManual,
-      (newVal) => {
-        if (newVal) {
-          // In manual mode, the grid updates via cellular automata
-          if (props.isPlaying) {
-            p5.loop();
-          }
-        } else {
-          // In MIDI mode, stop the p5.js loop to prevent grid updates
-          p5.noLoop();
-        }
-      }
-  );
-
-  watch(
-      () => props.pressedKeys,
-      (newPressedKeys) => {
-        if (!props.isManual) {
-          for (let row = 0; row < rowCount; row++) {
-            for (let column = 0; column < columnCount; column++) {
-              const cell = currentCells[row][column];
-              cell.isOn = newPressedKeys.has(cell.note.id);
-            }
-          }
-        p5.redraw();
-        }
-      },
-      { deep: true }
-  );
 
   watch(
       () => props.isPlaying,
@@ -147,17 +113,12 @@ const sketch = (p5: p5) => {
   const updateCellularAutomata = () => {
     nextCells = deepCloneCells(currentCells);
 
-    // reset
     for (let row = 0; row < rowCount; row++) {
       for (let column = 0; column < columnCount; column++) {
         nextCells[row][column].isRightmostChild = false;
       }
     }
-
-    const rightmostNewAliveNotes: Map<
-        number,
-        { column: number; noteId: string }
-    > = new Map();
+    const rightmostNewAliveNotes: Map<number, { column: number; noteId: string }> = new Map();
 
     for (let row = 0; row < rowCount; row++) {
       for (let column = 0; column < columnCount; column++) {
@@ -192,7 +153,6 @@ const sketch = (p5: p5) => {
     for (const [row, { column }] of rightmostNewAliveNotes.entries()) {
       nextCells[row][column].isRightmostChild = true;
     }
-
     const temp = currentCells;
     currentCells = nextCells;
     nextCells = temp;
@@ -203,30 +163,16 @@ const sketch = (p5: p5) => {
     for (const { noteId } of rightmostNewAliveNotes.values()) {
       activeNotes.add(noteId);
     }
-    if (activeNotes.size === 0) emit('gridIsClear')
-    if (props.isManual) emit('gridUpdated', activeNotes);
 
-    // TODO: Exit conditions check
+    if (activeNotes.size === 0) emit('gridIsClear')
+    emit('gridUpdated', activeNotes);
+
     p5.redraw();
   };
 
   const deepCloneCells = (cells: Cell[][]): Cell[][] => {
-    return cells.map(row =>
-        row.map(cell => ({
-          note: {
-            id: cell.note.id,
-            baseNote: {
-              key: cell.note.baseNote.key,
-              isSharp: cell.note.baseNote.isSharp,
-            },
-            octave: cell.note.octave,
-          },
-          isOn: cell.isOn,
-          isRightmostChild: cell.isRightmostChild || false
-        }))
-    );
+    return cells.map(row => row.map(cell => ({ ...cell })));
   };
-
 
   const countNeighbours = (row: number, column: number): number => {
     let count = 0;

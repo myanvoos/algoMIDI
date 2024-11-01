@@ -5,7 +5,6 @@
         @cellToggled="cellToggled"
         @gridUpdated="gridUpdated"
         @gridIsClear="gridIsClear"
-        :is-manual="props.isManual"
         :is-playing="props.isPlaying"
     />
   </div>
@@ -16,7 +15,6 @@ import CellularAutomata from "./cellular-automata/CellularAutomata.vue";
 
 const props = defineProps<{
   pressedKeys: Set<string>;
-  isManual: boolean;
   isPlaying: boolean;
 }>()
 
