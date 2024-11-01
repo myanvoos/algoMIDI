@@ -1,5 +1,4 @@
 <template>
-  <p>{{props.pressedKeys}}</p>
   <div class="piano">
     <div
         v-for="(note, index) in whiteKeys"

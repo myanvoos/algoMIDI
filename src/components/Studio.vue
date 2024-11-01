@@ -147,6 +147,8 @@ const handleCellToggled = (payload: { noteId: string, isOn: boolean }) => {
 const handleGridUpdated = (activeNotes: Set<string>) => {
   if (!samplerLoaded.value) return
   if (isManual.value) {
+    console.log("active")
+    console.log(activeNotes)
     activeNotes.forEach((note) => grandPianoSampler.triggerAttackRelease(note, '1m'))
     gridActiveKeys.value = activeNotes
   }
@@ -173,6 +175,7 @@ onUnmounted(() => {
     :isPlaying="isPlaying"
     :isManual="isManual"
   />
+  {{ isPlaying ? gridActiveKeys : pressedKeys}}
   <Piano
       :pressed-keys="gridActiveKeys"
       @togglePlayPause="togglePlayPause"

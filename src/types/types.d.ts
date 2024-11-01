@@ -23,3 +23,13 @@ export interface Cell {
     note: Note;
     isOn: boolean;
 }
+
+export type MusicMode =
+    | 'IONIAN'
+    | 'DORIAN'
+    | 'PHRYGIAN'
+    | 'LYDIAN'
+    | 'MIXOLYDIAN'
+    | 'AEOLIAN'
+    | 'LOCRIAN'
+    | 'CHROMATIC';

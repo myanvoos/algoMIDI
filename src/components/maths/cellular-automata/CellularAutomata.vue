@@ -2,6 +2,7 @@
 import p5 from "p5";
 import {Cell} from "../../../types/types.js";
 import {watch} from "vue";
+import {createNoteGrid} from "./musicalModes.ts";
 
 const props = defineProps<{
   pressedKeys: Set<string>;
@@ -16,30 +17,29 @@ const emit = defineEmits<{
 
 const sketch = (p5: p5) => {
   let cellSize: number;
-  let width: number = 700;
-  let height: number = 400;
+  let width: number = 500;
+  let height: number = 500;
 
-  const offsetShift = 3; // Dynamic variable to control the shift amount
-
-  const octaves = [1, 2, 3, 4, 5, 6, 7];
-  const baseNotes = ["A#", "A", "B#", "B", "C", "D#", "D", "E#", "E", "F", "G#", "G"];
-  const columnCount: number = baseNotes.length;
-  const rowCount: number = octaves.length;
-  
-  let prevCells: Cell[][] = [];
   let currentCells: Cell[][] = [];
   let nextCells: Cell[][] = [];
 
+  const gridSize = 11
+
+  const matrix = createNoteGrid('minor', 'C', gridSize)
+  const columnCount = gridSize
+  const rowCount = gridSize
+
+  const rightmostNewAliveNotes: Map<number, { column: number; noteId: string }> = new Map();
+
   p5.setup = () => {
     p5.createCanvas(width, height).mouseClicked(handleMouseClick);
-    p5.frameRate(1);
+    p5.frameRate(3);
     p5.background("#233140");
 
     cellSize = Math.floor(width / columnCount);
 
-    currentCells = initialiseGrid();
-    nextCells = initialiseGrid();
-    prevCells = initialiseGrid();
+    currentCells = deepCloneCells(matrix)
+    nextCells = deepCloneCells(matrix)
 
     p5.noLoop();
   };
@@ -59,26 +59,22 @@ const sketch = (p5: p5) => {
     p5.textSize(cellSize / 3); // Adjust text size relative to cell size
 
     for (let row = 0; row < rowCount; row++) {
-      const rowOffset = (row * offsetShift) % columnCount;
 
       for (let column = 0; column < columnCount; column++) {
         const cell = currentCells[row][column];
-        const prevCell = prevCells[row][column]
-        const shiftedColumn = (column + rowOffset) % columnCount;
+        const currentColumn = column % columnCount;
 
         if (cell.isOn) {
           p5.fill("#213547");
-        } else if (prevCell.isOn) {
-          prevCell.note.baseNote.isSharp ? p5.fill("lightblue") : p5.fill("lightskyblue")
         } else {
           p5.fill(255);
         }
 
-        p5.square(shiftedColumn * cellSize, row * cellSize, cellSize);
+        p5.square(currentColumn * cellSize, row * cellSize, cellSize);
 
         if (cell.isOn) {
           p5.fill(255);
-          p5.text(`${cell.note.id}`, shiftedColumn * cellSize + cellSize / 2, row * cellSize + cellSize / 2);
+          p5.text(`${cell.note.id}`, currentColumn * cellSize + cellSize / 2, row * cellSize + cellSize / 2);
         }
 
       }
@@ -132,8 +128,7 @@ const sketch = (p5: p5) => {
       const row = Math.floor(p5.mouseY / cellSize);
       if (row < 0 || row >= rowCount) return;
 
-      const rowOffset = (row * offsetShift) % columnCount;
-      let adjustedMouseX = p5.mouseX - (rowOffset * cellSize);
+      let adjustedMouseX = p5.mouseX;
       if (adjustedMouseX < 0) adjustedMouseX += columnCount * cellSize;
 
       const column = Math.floor(adjustedMouseX / cellSize) % columnCount;
@@ -148,72 +143,91 @@ const sketch = (p5: p5) => {
     }
   }
 
-  function initialiseGrid(): Cell[][] {
-    const grid: Cell[][] = [];
-
-    for (let i = 0; i < octaves.length; i++) {
-      const row: Cell[] = [];
-      for (let j = 0; j < baseNotes.length; j++) {
-        const note = baseNotes[j];
-        const octave = octaves[i];
-        const id = `${note}${octave}`;
-
-        row.push({
-          note: { id, baseNote: { key: note, isSharp: note.includes("#") }, octave },
-          isOn: false,
-        });
-      }
-      grid.push(row);
-    }
-
-    return grid;
-  }
-  function copyGrid(grid: Cell[][]): Cell[][] {
-    return grid.map(row => row.map(cell => ({...cell, note: {...cell.note } })))
-  }
-
   const updateCellularAutomata = () => {
-    nextCells = initialiseGrid();
-    const activeNotes: Set<string> = new Set<string>()
+    nextCells = deepCloneCells(currentCells);
+
     for (let row = 0; row < rowCount; row++) {
       for (let column = 0; column < columnCount; column++) {
-        const neighbours = countNeighbours(row, column)
+        const neighbours = countNeighbours(row, column);
 
-        // TODO: Custom cellular automata rules
         const cellIsOn = currentCells[row][column].isOn;
+        let newCellState = cellIsOn;
+
         if (cellIsOn && (neighbours < 2 || neighbours > 3)) {
-          nextCells[row][column].isOn = false;
+          newCellState = false;
         } else if (!cellIsOn && neighbours === 3) {
-          nextCells[row][column].isOn = true;
-        } else {
-          nextCells[row][column].isOn = cellIsOn;
+          newCellState = true;
         }
-        if (nextCells[row][column].isOn) activeNotes.add(nextCells[row][column].note.id)
+
+        nextCells[row][column].isOn = newCellState;
+
+        if (!cellIsOn && newCellState) {
+          // If this row doesn't have a rightmost cell yet or current column is further right
+          if (
+              !rightmostNewAliveNotes.has(row) ||
+              column > rightmostNewAliveNotes.get(row)!.column
+          ) {
+            rightmostNewAliveNotes.set(row, {
+              column,
+              noteId: currentCells[row][column].note.id,
+            });
+          }
+        }
       }
     }
 
-    let temp = currentCells;
+    const temp = currentCells;
     currentCells = nextCells;
     nextCells = temp;
+
+    // - activeNotes: notes that will be played by Tone.js, emitted to Studio.vue
+    // Can change this to all alive notes or just new rightmost alive notes
+    const activeNotes: Set<string> = new Set();
+    for (const { noteId } of rightmostNewAliveNotes.values()) {
+      activeNotes.add(noteId);
+    }
     if (props.isManual) emit('gridUpdated', activeNotes);
     p5.redraw();
-  }
+  };
+
+  const deepCloneCells = (cells: Cell[][]): Cell[][] => {
+    return cells.map(row =>
+        row.map(cell => ({
+          note: {
+            id: cell.note.id,
+            baseNote: {
+              key: cell.note.baseNote.key,
+              isSharp: cell.note.baseNote.isSharp,
+            },
+            octave: cell.note.octave,
+          },
+          isOn: cell.isOn,
+        }))
+    );
+  };
+
 
   const countNeighbours = (row: number, column: number): number => {
-    let left = (column - 1 + columnCount) % columnCount;
-    let right = (column + 1) % columnCount;
-    let above = (row - 1 + rowCount) % rowCount;
-    let below = (row + 1) % rowCount;
+    let count = 0;
 
-    return (currentCells[above][left].isOn ? 1 : 0) +
-        (currentCells[above][column].isOn ? 1 : 0) +
-        (currentCells[above][right].isOn ? 1 : 0) +
-        (currentCells[row][left].isOn ? 1 : 0) +
-        (currentCells[row][right].isOn ? 1 : 0) +
-        (currentCells[below][left].isOn ? 1 : 0) +
-        (currentCells[below][column].isOn ? 1 : 0) +
-        (currentCells[below][right].isOn ? 1 : 0)
-  }
+    for (let i = -1; i <= 1; i++) {
+      const neighborRow = (row + i + rowCount) % rowCount;
+
+      for (let j = -1; j <= 1; j++) {
+        if (i === 0 && j === 0) continue; // Skip the current cell
+
+        const neighborCol = (column + j + columnCount) % columnCount;
+        const shiftedNeighborCol = (neighborCol + columnCount) % columnCount;
+
+        if (currentCells[neighborRow][shiftedNeighborCol].isOn) {
+          count++;
+        }
+      }
+    }
+
+    return count;
+  };
+
 };
 </script>
 
