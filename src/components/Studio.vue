@@ -163,6 +163,8 @@ onUnmounted(() => {
       midiPart = null;
     }
     midiUrl.value = '';
+    // isPlaying.value = false
+    // isManual.value = false
   };
 });
 </script>

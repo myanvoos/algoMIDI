@@ -22,6 +22,7 @@ export interface BaseNote {
 export interface Cell {
     note: Note;
     isOn: boolean;
+    isRightmostChild: boolean;
 }
 
 export type MusicMode =

@@ -29,8 +29,6 @@ const sketch = (p5: p5) => {
   const columnCount = gridSize
   const rowCount = gridSize
 
-  const rightmostNewAliveNotes: Map<number, { column: number; noteId: string }> = new Map();
-
   p5.setup = () => {
     p5.createCanvas(width, height).mouseClicked(handleMouseClick);
     p5.frameRate(3);
@@ -65,7 +63,8 @@ const sketch = (p5: p5) => {
         const currentColumn = column % columnCount;
 
         if (cell.isOn) {
-          p5.fill("#213547");
+          if (cell.isRightmostChild) p5.fill("lightskyblue")
+          else p5.fill("#213547");
         } else {
           p5.fill(255);
         }
@@ -73,7 +72,8 @@ const sketch = (p5: p5) => {
         p5.square(currentColumn * cellSize, row * cellSize, cellSize);
 
         if (cell.isOn) {
-          p5.fill(255);
+          if (cell.isRightmostChild) p5.fill("#213547")
+          else p5.fill(255);
           p5.text(`${cell.note.id}`, currentColumn * cellSize + cellSize / 2, row * cellSize + cellSize / 2);
         }
 
@@ -146,6 +146,18 @@ const sketch = (p5: p5) => {
   const updateCellularAutomata = () => {
     nextCells = deepCloneCells(currentCells);
 
+    // reset
+    for (let row = 0; row < rowCount; row++) {
+      for (let column = 0; column < columnCount; column++) {
+        nextCells[row][column].isRightmostChild = false;
+      }
+    }
+
+    const rightmostNewAliveNotes: Map<
+        number,
+        { column: number; noteId: string }
+    > = new Map();
+
     for (let row = 0; row < rowCount; row++) {
       for (let column = 0; column < columnCount; column++) {
         const neighbours = countNeighbours(row, column);
@@ -176,6 +188,10 @@ const sketch = (p5: p5) => {
       }
     }
 
+    for (const [row, { column }] of rightmostNewAliveNotes.entries()) {
+      nextCells[row][column].isRightmostChild = true;
+    }
+
     const temp = currentCells;
     currentCells = nextCells;
     nextCells = temp;
@@ -187,6 +203,8 @@ const sketch = (p5: p5) => {
       activeNotes.add(noteId);
     }
     if (props.isManual) emit('gridUpdated', activeNotes);
+
+    // TODO: Exit conditions check
     p5.redraw();
   };
 
@@ -202,6 +220,7 @@ const sketch = (p5: p5) => {
             octave: cell.note.octave,
           },
           isOn: cell.isOn,
+          isRightmostChild: cell.isRightmostChild || false
         }))
     );
   };
@@ -209,22 +228,16 @@ const sketch = (p5: p5) => {
 
   const countNeighbours = (row: number, column: number): number => {
     let count = 0;
-
     for (let i = -1; i <= 1; i++) {
       const neighborRow = (row + i + rowCount) % rowCount;
-
       for (let j = -1; j <= 1; j++) {
-        if (i === 0 && j === 0) continue; // Skip the current cell
-
+        if (i === 0 && j === 0) continue;
         const neighborCol = (column + j + columnCount) % columnCount;
-        const shiftedNeighborCol = (neighborCol + columnCount) % columnCount;
-
-        if (currentCells[neighborRow][shiftedNeighborCol].isOn) {
+        if (currentCells[neighborRow][neighborCol].isOn) {
           count++;
         }
       }
     }
-
     return count;
   };
 
