@@ -2,12 +2,11 @@
 import Piano from "./piano/Piano.vue"
 import MathsCanvas from "./maths/MathsCanvas.vue"
 import {onUnmounted, ref} from 'vue'
-import * as Tone from 'tone'
 import {usePianoSampler} from "../composables/usePianoSampler.ts"
 import {useTransport} from "../composables/useTransport.ts";
 
 const { sampler, samplerLoaded, samplerError } = usePianoSampler()
-const { isPlaying, togglePlayPause, transportError, cleanup } = useTransport()
+const { isPlaying, transportError, togglePlayPause, cleanup } = useTransport()
 
 // NOTE:
 // Use Set instead of Array for storing pressed keys, for O(1) lookup time.
@@ -60,7 +59,8 @@ onUnmounted(cleanup)
   />
   <Piano
       :pressed-keys="pressedKeys"
-      :disabled="!samplerLoaded"
+      :is-playing="isPlaying"
+      @toggle-play-pause="togglePlayPause"
   />
 </template>
 

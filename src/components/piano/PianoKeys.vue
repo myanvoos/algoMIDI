@@ -1,4 +1,3 @@
-
 <script setup lang="ts">
 import {fullKeyboard} from "../../data/keyboardData.ts";
 import {computed} from "vue";
@@ -6,7 +5,6 @@ import {computed} from "vue";
 const props = defineProps<{
   pressedKeys: Set<string>;
 }>();
-
 
 const whiteKeys = computed(() => fullKeyboard.filter(note => !note.baseNote.isSharp));
 const blackKeys = computed(() => fullKeyboard.filter(note => note.baseNote.isSharp));
@@ -93,5 +91,4 @@ const getBlackKeyPosition = (index: number): number => {
   transition: background-color 0.1s;
   z-index: 2;
 }
-
 </style>

@@ -1,18 +1,14 @@
 <script setup lang="ts">
 import PianoKeys from "./PianoKeys.vue";
-import {useTransport} from "../../composables/useTransport.ts";
 
 const props = defineProps<{
-  pressedKeys: Set<string>;
-  isPlaying: boolean;
+  pressedKeys: Set<string>
+  isPlaying: boolean
 }>();
 
-const { isPlaying, transportError, togglePlayPause } = useTransport()
-
 const emit = defineEmits<{
-  (e: 'togglePlayPause'): void;
+  (e: 'togglePlayPause'): void
 }>()
-
 </script>
 
 <template>
@@ -24,13 +20,11 @@ const emit = defineEmits<{
       <PianoKeys
           :pressed-keys="props.pressedKeys"
       />
-
       <button
           @click="$emit('togglePlayPause')"
           class="play-button"
-          :disabled="!!transportError"
       >
-        {{ props.isPlaying ? 'Pause' : 'Play' }}
+        {{ isPlaying ? 'Pause' : 'Play' }}
       </button>
     </div>
   </div>
