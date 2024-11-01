@@ -48,20 +48,20 @@ onUnmounted(cleanup)
     <div v-if="!samplerLoaded"  class="loading-banner">
       Loading sound samples...
     </div>
-  </div>
 
-  <MathsCanvas
-    :pressedKeys="pressedKeys"
-    @cellToggled="handleCellToggled"
-    @gridUpdated="handleGridUpdated"
-    @gridIsClear="handleGridIsClear"
-    :isPlaying="isPlaying"
-  />
-  <Piano
-      :pressed-keys="pressedKeys"
-      :is-playing="isPlaying"
-      @toggle-play-pause="togglePlayPause"
-  />
+    <MathsCanvas
+      :pressedKeys="pressedKeys"
+      @cellToggled="handleCellToggled"
+      @gridUpdated="handleGridUpdated"
+      @gridIsClear="handleGridIsClear"
+      :isPlaying="isPlaying"
+    />
+    <Piano
+        :pressed-keys="pressedKeys"
+        :is-playing="isPlaying"
+        @toggle-play-pause="togglePlayPause"
+    />
+  </div>
 </template>
 
 <style scoped>

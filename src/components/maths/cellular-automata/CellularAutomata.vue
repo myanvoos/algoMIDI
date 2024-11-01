@@ -1,207 +1,129 @@
 <script setup lang="ts">
-import p5 from "p5";
-import {Cell} from "../../../types/types.js";
-import {watch} from "vue";
-import { createNoteGrid } from "../../../data/musicalModes.ts";
-import {useP5Canvas} from "../../../composables/useP5Canvas.ts";
+import { ref, watch, onMounted } from 'vue'
+import p5 from 'p5'
+import { useP5Canvas } from '../../../composables/useP5Canvas'
+import { useCellularAutomata } from '../../../composables/useCellularAutomata'
+import {AutomataConfig, P5CanvasConfig} from "../../../types/types"
 
 const props = defineProps<{
-  pressedKeys: Set<string>;
-  isPlaying: boolean;
-}>();
+  pressedKeys: Set<string>
+  isPlaying: boolean
+}>()
 
 const emit = defineEmits<{
-  (e: 'cellToggled', payload: { noteId: string; isOn: boolean}): void
+  (e: 'cellToggled', payload: { noteId: string; isOn: boolean }): void
   (e: 'gridUpdated', activeNotes: Set<string>): void
   (e: 'gridIsClear'): void
 }>()
 
-const [p5Instance, initCanvas, drawGrid, handleMouseClick] = useP5Canvas()
+const automataConfig: AutomataConfig = ref<AutomataConfig>({
+  gridSize: 11,
+  scale: 'minor',
+  rootNote: 'C',
+})
 
-initCanvas(500, 500, 3, "#233140")
+const {
+  currentCells,
+  rowCount,
+  columnCount,
+  updateAutomata,
+} = useCellularAutomata(automataConfig.value)
 
+const cellSize = ref(0)
+const canvasConfig: P5CanvasConfig = ref<P5CanvasConfig>({
+  width: 500,
+  height: 500,
+  frameRate: 3,
+  backgroundColour: '#233140'
+})
+const canvasContainer = ref<HTMLElement | null>(null)
 
-// const sketch = (p5: p5) => {
-//
-//   let cellSize: number;
-//   let width: number = 500;
-//   let height: number = 500;
-//
-//   let currentCells: Cell[][] = [];
-//   let nextCells: Cell[][] = [];
-//
-//   const gridSize = 11
-//
-//   let matrix = createNoteGrid('minor', 'C', gridSize)
-//   const columnCount = matrix[0].length
-//   const rowCount = matrix.length
-//
-//   p5.setup = () => {
-//     p5.createCanvas(width, height).mouseClicked(handleMouseClick);
-//     p5.frameRate(3);
-//     p5.background("#233140");
-//
-//     cellSize = Math.floor(width / columnCount);
-//
-//     currentCells = deepCloneCells(matrix)
-//     nextCells = deepCloneCells(matrix)
-//
-//     p5.noLoop();
-//   };
-//
-//   p5.draw = () => {
-//     if (props.isPlaying) {
-//       updateCellularAutomata()
-//     }
-//     p5.background('#233140');
-//     drawGrid();
-//   }
-//
-//   const drawGrid = () => {
-//     p5.stroke("slategray");
-//     p5.textAlign(p5.CENTER, p5.CENTER);
-//     p5.textSize(cellSize / 3);
-//
-//     for (let row = 0; row < rowCount; row++) {
-//       for (let column = 0; column < columnCount; column++) {
-//         const cell = currentCells[row][column];
-//         const currentColumn = column % columnCount;
-//
-//         if (cell.isOn) {
-//           if (cell.isRightmostChild) p5.fill("lightskyblue")
-//           else p5.fill("#213547");
-//         } else {
-//           p5.fill(255);
-//         }
-//
-//         p5.square(currentColumn * cellSize, row * cellSize, cellSize);
-//
-//         if (cell.isOn) {
-//           if (cell.isRightmostChild) p5.fill("#213547")
-//           else p5.fill(255);
-//           p5.text(`${cell.note.id}`, currentColumn * cellSize + cellSize / 2, row * cellSize + cellSize / 2);
-//         }
-//
-//       }
-//     }
-//   };
-//
-//   watch(
-//       () => props.isPlaying,
-//       (newVal) => {
-//         if (newVal) {
-//           p5.loop();
-//         } else {
-//           p5.noLoop();
-//         }
-//       }
-//   );
-//
-//   const handleMouseClick = (): void => {
-//     if (!props.isPlaying) {
-//       const row = Math.floor(p5.mouseY / cellSize);
-//       if (row < 0 || row >= rowCount) return;
-//
-//       let adjustedMouseX = p5.mouseX;
-//       if (adjustedMouseX < 0) adjustedMouseX += columnCount * cellSize;
-//
-//       const column = Math.floor(adjustedMouseX / cellSize) % columnCount;
-//       if (column < 0 || column >= columnCount) return;
-//
-//       currentCells[row][column].isOn = !currentCells[row][column].isOn;
-//       emit('cellToggled', {
-//         noteId: currentCells[row][column].note.id,
-//         isOn: currentCells[row][column].isOn,
-//       });
-//       p5.redraw();
-//     }
-//   }
-//
-//   const updateCellularAutomata = () => {
-//     nextCells = deepCloneCells(currentCells);
-//
-//     for (let row = 0; row < rowCount; row++) {
-//       for (let column = 0; column < columnCount; column++) {
-//         nextCells[row][column].isRightmostChild = false;
-//       }
-//     }
-//     const rightmostNewAliveNotes: Map<number, { column: number; noteId: string }> = new Map();
-//
-//     for (let row = 0; row < rowCount; row++) {
-//       for (let column = 0; column < columnCount; column++) {
-//         const neighbours = countNeighbours(row, column);
-//
-//         const cellIsOn = currentCells[row][column].isOn;
-//         let newCellState = cellIsOn;
-//
-//         if (cellIsOn && (neighbours < 2 || neighbours > 3)) {
-//           newCellState = false;
-//         } else if (!cellIsOn && neighbours === 3) {
-//           newCellState = true;
-//         }
-//
-//         nextCells[row][column].isOn = newCellState;
-//
-//         if (!cellIsOn && newCellState) {
-//           // If this row doesn't have a rightmost cell yet or current column is further right
-//           if (
-//               !rightmostNewAliveNotes.has(row) ||
-//               column > rightmostNewAliveNotes.get(row)!.column
-//           ) {
-//             rightmostNewAliveNotes.set(row, {
-//               column,
-//               noteId: currentCells[row][column].note.id,
-//             });
-//           }
-//         }
-//       }
-//     }
-//
-//     for (const [row, { column }] of rightmostNewAliveNotes.entries()) {
-//       nextCells[row][column].isRightmostChild = true;
-//     }
-//     const temp = currentCells;
-//     currentCells = nextCells;
-//     nextCells = temp;
-//
-//     // - activeNotes: notes that will be played by Tone.js, emitted to Studio.vue
-//     // Can change this to all alive notes or just new rightmost alive notes
-//     const activeNotes: Set<string> = new Set();
-//     for (const { noteId } of rightmostNewAliveNotes.values()) {
-//       activeNotes.add(noteId);
-//     }
-//
-//     if (activeNotes.size === 0) emit('gridIsClear')
-//     emit('gridUpdated', activeNotes);
-//
-//     p5.redraw();
-//   };
-//
-//   const deepCloneCells = (cells: Cell[][]): Cell[][] => {
-//     return cells.map(row => row.map(cell => ({ ...cell })));
-//   };
-//
-//   const countNeighbours = (row: number, column: number): number => {
-//     let count = 0;
-//     for (let i = -1; i <= 1; i++) {
-//       const neighborRow = (row + i + rowCount) % rowCount;
-//       for (let j = -1; j <= 1; j++) {
-//         if (i === 0 && j === 0) continue;
-//         const neighborCol = (column + j + columnCount) % columnCount;
-//         if (currentCells[neighborRow][neighborCol].isOn) {
-//           count++;
-//         }
-//       }
-//     }
-//     return count;
-//   };
-//
-// };
+const onCellToggled = (payload: { noteId: string; isOn: boolean }) => emit('cellToggled', payload)
+
+const sketch = (p5: p5) => {
+  p5.setup = () => {
+    p5.createCanvas(canvasConfig.value.width, canvasConfig.value.height)
+        .parent(canvasContainer.value!)
+        .mouseClicked(handleMouseClick)
+    p5.frameRate(canvasConfig.value.frameRate)
+    p5.background(canvasConfig.value.backgroundColour)
+    cellSize.value = Math.floor(canvasConfig.value.width / columnCount.value)
+    p5.noLoop()
+  }
+  p5.draw = () => {
+    p5.background(canvasConfig.value.backgroundColour)
+    if (props.isPlaying) {
+      const activeNotes = updateAutomata()
+      if (activeNotes.size === 0) emit('gridIsClear')
+      emit('gridUpdated', activeNotes)
+    }
+    drawGrid()
+  }
+  const drawGrid = () => {
+    p5.stroke('slategray')
+    p5.textAlign(p5.CENTER, p5.CENTER)
+    p5.textSize(cellSize.value / 3)
+
+    currentCells.value.forEach((row, rowIndex) => {
+      row.forEach((cell, colIndex) => {
+        const currentColumn = colIndex % columnCount.value
+
+        if (cell.isOn) p5.fill(cell.isRightmostChild ? 'lightskyblue' : '#213547')
+        else p5.fill(255)
+
+        p5.square(
+            currentColumn * cellSize.value,
+            rowIndex * cellSize.value,
+            cellSize.value
+        )
+
+        if (cell.isOn) {
+          p5.fill(cell.isRightmostChild ? '#213547' : 255)
+          p5.text(
+              `${cell.note.id}`,
+              currentColumn * cellSize.value + cellSize.value / 2,
+              rowIndex * cellSize.value + cellSize.value / 2
+          )
+        }
+      })
+    })
+  }
+  
+  const handleMouseClick = () => {
+    if (!props.isPlaying) {
+      const row = Math.floor(p5.mouseY / cellSize.value)
+      if (row < 0 || row >= rowCount.value) return
+      
+      let adjustedMouseX = p5.mouseX
+      if (adjustedMouseX < 0)
+        adjustedMouseX += columnCount.value * cellSize.value
+      const column =
+          Math.floor(adjustedMouseX / cellSize.value) % columnCount.value
+      
+      if (column < 0 || column >= columnCount.value) return
+      const cell = currentCells.value[row][column]
+      cell.isOn = !cell.isOn
+      onCellToggled({
+        noteId: cell.note.id,
+        isOn: cell.isOn,
+      })
+      p5.redraw()
+    }
+  }
+}
+const { p5Instance, initCanvas } = useP5Canvas()
+
+onMounted(() => initCanvas(sketch, canvasContainer.value))
+
+watch(() => props.isPlaying,
+    (newVal) => {
+      if (p5Instance.value) {
+        if (newVal) p5Instance.value.loop()
+        else p5Instance.value.noLoop()
+      }
+    }
+)
 </script>
-
 <template>
-  <P5 :sketch="sketch" />
+  <div ref="canvasContainer"></div>
 </template>
-
-<style scoped>
-</style>
