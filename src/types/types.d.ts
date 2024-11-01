@@ -1,22 +1,12 @@
-export interface MidiEvent {
-    time: number;
-    note: string;
-    type: 'noteOn' | 'noteOff';
-    trackName?: string;
-    channel?: number;
-}
+// types/types.ts
 
 // Note with octave
 export interface Note {
     id: string; // i.e. C4, D#5
-    baseNote: BaseNote;
-    octave: number;
-}
-
-// Note without octave
-export interface BaseNote {
-    key: string;
-    isSharp?: boolean;
+    baseNote: {
+        key: string;
+        isSharp?: boolean;
+    }
 }
 
 export interface Cell {
