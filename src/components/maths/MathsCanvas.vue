@@ -1,5 +1,9 @@
 <template>
   <div class="min-w-[1200px] flex items-center justify-center">
+    <div>
+    <Button label="Settings">
+      <Settings2 class="w-5 h-5" />
+    </Button>
     <CellularAutomata
         :pressed-keys="props.pressedKeys"
         @cellToggled="cellToggled"
@@ -7,11 +11,16 @@
         @gridIsClear="gridIsClear"
         :is-playing="props.isPlaying"
     />
+    </div>
+    
   </div>
 </template>
 
 <script setup lang="ts">
-import CellularAutomata from "./cellular-automata/CellularAutomata.vue";
+import { Settings2 } from "lucide-vue-next";
+import CellularAutomata from "./CellularAutomata.vue";
+import { Button } from "primevue";
+import { ref } from "vue";
 
 const props = defineProps<{
   pressedKeys: Set<string>;

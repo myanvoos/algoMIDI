@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import {ref, watch, onMounted, Ref} from 'vue'
 import p5 from 'p5'
-import { useP5Canvas } from '../../../composables/useP5Canvas'
-import { useCellularAutomata } from '../../../composables/useCellularAutomata'
-import {AutomataConfig, P5CanvasConfig} from "../../../types/types"
+import { useP5Canvas } from '../../composables/useP5Canvas'
+import { useCellularAutomata } from '../../composables/useCellularAutomata'
+import {AutomataConfig, P5CanvasConfig} from "../../types/types"
 
 const props = defineProps<{
   pressedKeys: Set<string>

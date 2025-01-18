@@ -5,11 +5,22 @@
     "moduleResolution": "node",
     "strict": true,
     "esModuleInterop": true,
-    "allowImportingTsExtensions": true,
     "jsx": "preserve",
-    "lib": ["dom", "esnext"],
-    "types": ["jest", "node"]
+    "lib": [
+      "dom",
+      "esnext"
+    ],
+    "types": [
+      "jest",
+      "node"
+    ]
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"],
-  "exclude": ["node_modules"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.vue"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

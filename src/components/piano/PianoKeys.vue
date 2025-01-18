@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {fullKeyboard} from "../../data/keyboardData.ts";
+import {fullKeyboard} from "../../data/keyboardData";
 import {computed} from "vue";
 
 const props = defineProps<{

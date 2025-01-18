@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import PianoKeys from "./PianoKeys.vue";
-import {useTransport} from "../../composables/useTransport.ts";
+import {useTransport} from "../../composables/useTransport";
 
 const props = defineProps<{
   pressedKeys: Set<string>

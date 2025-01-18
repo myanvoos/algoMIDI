@@ -2,8 +2,8 @@
 import Piano from "./piano/Piano.vue"
 import MathsCanvas from "./maths/MathsCanvas.vue"
 import {onUnmounted, ref} from 'vue'
-import {usePianoSampler} from "../composables/usePianoSampler.ts"
-import {useTransport} from "../composables/useTransport.ts";
+import {usePianoSampler} from "../composables/usePianoSampler"
+import {useTransport} from "../composables/useTransport";
 
 const { sampler, samplerLoaded, samplerError } = usePianoSampler()
 const { isPlaying, transportError, togglePlayPause, cleanup } = useTransport()
