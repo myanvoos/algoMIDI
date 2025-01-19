@@ -9,6 +9,19 @@ export function useCellularAutomata(config: AutomataConfig) {
     const rowCount = computed(() => currentCells.value.length)
     const columnCount = computed(() => currentCells.value[0].length)
 
+    const parseRules = (rules: string): { born: number[]; survive: number[] } => {
+        console.log("Rule for cellular automata: ", rules)
+        const [born, survive] = rules.split('/')
+        return {
+            born: born.slice(1).split(',').map(Number),
+            survive: survive.slice(1).split(',').map(Number)
+        }
+    }
+
+    const rules = ref(config.rules)
+    const parsedRules = ref(parseRules(rules.value))
+    console.log("Parsed rules: ", parsedRules.value)
+
     const deepCloneCells = (cells: Cell[][]): Cell[][] => {
         return cells.map((row) => row.map((cell) => ({ ...cell })))
     }
@@ -69,8 +82,11 @@ export function useCellularAutomata(config: AutomataConfig) {
                 const cellIsOn = currentCells.value[row][column].isOn
                 let newCellState = cellIsOn
 
-                if (cellIsOn && (neighbours < 2 || neighbours > 3)) newCellState = false
-                else if (!cellIsOn && neighbours === 3) newCellState = true
+                if (cellIsOn) {
+                    newCellState = parsedRules.value.survive.includes(neighbours)
+                } else {
+                    newCellState = parsedRules.value.born.includes(neighbours)
+                }
 
                 nextCells.value[row][column].isOn = newCellState
 

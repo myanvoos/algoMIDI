@@ -6,6 +6,7 @@ export interface AutomataConfig {
     gridSize: number;
     scale: "major" | "minor" | "chromatic";
     rootNote: string;
+    rules: string;
 }
 
 export interface P5CanvasConfig {
@@ -16,9 +17,9 @@ export interface P5CanvasConfig {
 }
 
 export interface P5CanvasOptions {
-    currentCells: ref<Cell[][]>
-    rowCount: ref<number>
-    columnCount: ref<number>
+    currentCells: Cell[][]
+    rowCount: number
+    columnCount: number
     onCellToggled: (payload: { noteId: string; isOn: boolean}) => void
 }
 

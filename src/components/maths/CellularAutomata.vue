@@ -8,6 +8,7 @@ import {AutomataConfig, P5CanvasConfig} from "../../types/types"
 const props = defineProps<{
   pressedKeys: Set<string>
   isPlaying: boolean
+  cellularAutomataRules: string
 }>()
 
 const emit = defineEmits<{
@@ -20,6 +21,7 @@ const automataConfig: Ref<AutomataConfig> = ref<AutomataConfig>({
   gridSize: 11,
   scale: 'minor',
   rootNote: 'C',
+  rules: props.cellularAutomataRules
 })
 
 const {
