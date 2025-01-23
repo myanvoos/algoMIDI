@@ -3,8 +3,10 @@
     <div>
       <CASettings 
         v-if="settingsOpen" 
-        :cellular-automata-rules="cellularAutomataRules" 
+        :cellular-automata-rules="cellularAutomataRules"
+        :playback-tempo="playbackTempo"
         @update:cellular-automata-rules="updateCellularAutomataRules" 
+        @update:playback-tempo="updatePlaybackTempo"
       />
     </div>
     <div>
@@ -14,11 +16,12 @@
           <p class="ml-2">({{ cellularAutomataRules }})</p>
         </template>
         <template #end>
-          <Button label="Fragments" icon-class="mr-1" icon="pi pi-th-large"  />
+          <Button label="Layout" icon-class="mr-1" icon="pi pi-th-large"  />
         </template>
       </Toolbar>
     <CellularAutomata
         :pressed-keys="props.pressedKeys"
+        :playback-tempo="props.playbackTempo"
         :cellular-automata-rules="cellularAutomataRules"
         @cellToggled="cellToggled"
         @gridUpdated="gridUpdated"
@@ -42,16 +45,22 @@ const cellularAutomataRules = ref('B3/S2,3')
 const props = defineProps<{
   pressedKeys: Set<string>;
   isPlaying: boolean;
+  playbackTempo: number;
 }>()
 
 const emit = defineEmits<{
   (e: 'cellToggled', payload: { noteId: string; isOn: boolean }): void
   (e: 'gridUpdated', activeNotes: Set<string>): void
   (e: 'gridIsClear'): void
+  (e: 'update:playbackTempo', value: number): void
 }>()
 
 const updateCellularAutomataRules = (value: string) => {
   cellularAutomataRules.value = value;
+};
+
+const updatePlaybackTempo = (value: number) => {
+  emit('update:playbackTempo', value);
 };
 
 const cellToggled = (payload: { noteId: string; isOn: boolean }) => {

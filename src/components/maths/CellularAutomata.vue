@@ -9,6 +9,7 @@ const props = defineProps<{
   pressedKeys: Set<string>
   isPlaying: boolean
   cellularAutomataRules: string
+  playbackTempo: number
 }>()
 
 const emit = defineEmits<{
@@ -37,12 +38,27 @@ const {
 } = useCellularAutomata(automataConfig.value)
 
 const cellSize = ref(0)
+
+/**
+ * Specifies the canvas configuration
+ * IMPORTANT: frameRate directly affects the tempo.
+ * Frame rate of 3 => notes recorded every 1/3 second, equivalent to 180 bpm
+ * as 60 bpm is 1/60 second per beat, or frame rate of 1.
+ */
 const canvasConfig: Ref<P5CanvasConfig> = ref<P5CanvasConfig>({
   width: 500,
   height: 500,
-  frameRate: 3,
+  frameRate: props.playbackTempo / 60, // needs to be 3 for 180bpm tempo sync with Tone.js
   backgroundColour: '#233140'
 })
+
+watch(() => props.playbackTempo, (newTempo) => {
+  canvasConfig.value.frameRate = newTempo / 60
+  if (p5Instance.value) {
+    p5Instance.value.frameRate(canvasConfig.value.frameRate)
+  }
+})
+
 const canvasContainer = ref<HTMLElement | null>(null)
 
 const onCellToggled = (payload: { noteId: string; isOn: boolean }) => emit('cellToggled', payload)

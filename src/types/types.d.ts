@@ -23,6 +23,12 @@ export interface P5CanvasOptions {
     onCellToggled: (payload: { noteId: string; isOn: boolean}) => void
 }
 
+export interface Track {
+    id: string;
+    name: string;
+    cells: Set<string>[]
+}
+
 // Note with octave
 export interface Note {
     id: string; // i.e. C4, D#5

@@ -18,7 +18,7 @@ export function useTransport() {
             }
         } catch (err) {
             transportError.value = err instanceof Error ? err : new Error("Unknown error occurred")
-            console.transportError('Transport error:', transportError.value)
+            console.error('Transport error:', transportError.value)
         }
     }
 

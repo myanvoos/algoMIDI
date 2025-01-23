@@ -3,6 +3,19 @@
     <template #content>
       <div class="settings-content">
         <div class="section">
+          <h4 class="section-title">Tempo</h4>
+          <select
+            :value="props.playbackTempo"
+            @change="(e) => updatePlaybackTempo(Number((e.target as HTMLSelectElement).value))"
+            class="w-full p-2 rounded-md bg-[#f0f0f0] border border-gray-300 text-black"
+          >
+            <option value="60">60</option>
+            <option value="120">120</option>
+            <option value="180">180</option>
+            <option value="240">240</option>
+          </select>
+        </div>
+        <div class="section">
           <h4 class="section-title">Preset Layouts</h4>
           <div class="preset-grid">
             <Button 
@@ -20,12 +33,11 @@
         <div class="section">
           <h4 class="section-title">Custom Rules</h4>
           <Textarea
-            v-model="customRules"
+            :model-value="props.cellularAutomataRules"
+            @update:model-value="updateCustomRules"
             rows="4"
             placeholder="Enter your custom rules here..."
             class="w-full"
-            :value="props.cellularAutomataRules"
-            @input="updateCustomRules"
             style="outline: 1px solid whitesmoke; border-radius: 10px; padding: 10px;"
           />
           <small class="helper-text">
@@ -46,8 +58,8 @@ import { ref } from 'vue';
 
 const customRules = ref('B3/S2,3');
 
-const updateCustomRules = (event: Event) => {
-  customRules.value = (event.target as HTMLTextAreaElement).value;
+const updateCustomRules = (value: string) => {
+  customRules.value = value;
   emit('update:cellular-automata-rules', customRules.value);
 };
 
@@ -60,10 +72,12 @@ const presets = [
 
 const props = defineProps<{
   cellularAutomataRules: string;
+  playbackTempo: number;
 }>()
 
 const emit = defineEmits<{
   (e: 'update:cellular-automata-rules', value: string): void;
+  (e: 'update:playback-tempo', value: number): void;
 }>()
 
 const selectedPreset = ref<string | undefined>(
@@ -74,6 +88,11 @@ const selectPreset = (preset: { name: string; rules: string }) => {
   customRules.value = preset.rules;
   selectedPreset.value = preset.name;
   emit('update:cellular-automata-rules', customRules.value);
+};
+
+
+const updatePlaybackTempo = (value: number) => {
+  emit('update:playback-tempo', value);
 };
 
 

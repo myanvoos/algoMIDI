@@ -4,7 +4,7 @@ import Studio from "./components/Studio.vue";
 </script>
 
 <template>
-  <div class="flex flex-col justify-between overflow-hidden">
+  <div>
     <Studio />
 
   </div>
