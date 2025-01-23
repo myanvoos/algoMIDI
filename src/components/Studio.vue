@@ -21,7 +21,8 @@ const { isPlaying, transportError, togglePlayPause, cleanup } = useTransport()
 const track = ref<Track>({
   id: new Date().getTime().toString(),
   name: "Untitled Track",
-  cells: [new Set<string>()]
+  cells: [new Set<string>()],
+  volume: 1
 })
 
 const tracks = ref<Track[]>([])
@@ -31,7 +32,7 @@ const pressedKeys = ref<Set<string>>(new Set())
 const playbackTempo = ref(180)
 
 watch(pressedKeys, (newPresssedKeys) => {
-  if (isPlaying.value) {
+  if (isPlaying.value || track.value.cells.length === 0) {
     const newSet = new Set(newPresssedKeys)
     track.value.cells.push(newSet)
     console.log("Updated track:", track.value)
@@ -47,7 +48,6 @@ const handleCellToggled = (payload: { noteId: string, isOn: boolean }) => {
 const handleGridUpdated = (activeNotes: Set<string>) => {
   if (!samplerLoaded.value) return
   try {
-    // Use consistent note duration
     activeNotes.forEach((note) => sampler.triggerAttackRelease(note, '4n'))
     pressedKeys.value = activeNotes
   } catch (err) {
@@ -64,15 +64,15 @@ const handleGridIsClear = () => {
 const updatePlaybackTempo = (value: number) => {
   playbackTempo.value = value
   togglePlayPause()
-  Tone.getTransport().stop()
   initialiseTransport()
-  Tone.getTransport().start()
   togglePlayPause()
   console.log("Updated playback tempo:", playbackTempo.value)
 }
 
 const initialiseTransport = () => {
+  Tone.getTransport().stop()
   Tone.getTransport().bpm.value = playbackTempo.value
+  Tone.getTransport().start()
 }
 
 onUnmounted(cleanup)

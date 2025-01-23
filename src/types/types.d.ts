@@ -27,6 +27,7 @@ export interface Track {
     id: string;
     name: string;
     cells: Set<string>[]
+    volume: number
 }
 
 // Note with octave
