@@ -1,12 +1,17 @@
 <template>
   <div class="min-w-[1200px] flex items-center justify-center">
     <div>
-      <CASettings v-if="settingsOpen" :cellular-automata-rules="cellularAutomataRules" @update:cellular-automata-rules="updateCellularAutomataRules" />
+      <CASettings 
+        v-if="settingsOpen" 
+        :cellular-automata-rules="cellularAutomataRules" 
+        @update:cellular-automata-rules="updateCellularAutomataRules" 
+      />
     </div>
     <div>
       <Toolbar>
         <template #start>
           <Button label="Settings" icon-class="mr-1" icon="pi pi-sliders-h" @click="settingsOpen = !settingsOpen" />
+          <p class="ml-2">({{ cellularAutomataRules }})</p>
         </template>
         <template #end>
           <Button label="Fragments" icon-class="mr-1" icon="pi pi-th-large"  />
@@ -47,7 +52,6 @@ const emit = defineEmits<{
 
 const updateCellularAutomataRules = (value: string) => {
   cellularAutomataRules.value = value;
-  console.log(cellularAutomataRules.value)
 };
 
 const cellToggled = (payload: { noteId: string; isOn: boolean }) => {

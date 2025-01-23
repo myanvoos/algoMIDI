@@ -24,6 +24,11 @@ const automataConfig: Ref<AutomataConfig> = ref<AutomataConfig>({
   rules: props.cellularAutomataRules
 })
 
+watch(() => props.cellularAutomataRules, (newRules) => {
+  automataConfig.value.rules = newRules
+  console.log("Updated automata config: ", automataConfig.value)
+})
+
 const {
   currentCells,
   rowCount,

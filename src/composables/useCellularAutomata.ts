@@ -1,8 +1,8 @@
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { createNoteGrid } from '../data/musicalModes'
 import { Cell, AutomataConfig } from '../types/types'
 
-export function useCellularAutomata(config: AutomataConfig) {
+export const useCellularAutomata = (config: AutomataConfig) => {
     const currentCells = ref<Cell[][]>(createNoteGrid(config))
     const nextCells = ref<Cell[][]>([])
 
@@ -20,7 +20,10 @@ export function useCellularAutomata(config: AutomataConfig) {
 
     const rules = ref(config.rules)
     const parsedRules = ref(parseRules(rules.value))
-    console.log("Parsed rules: ", parsedRules.value)
+
+    watch(config, (newConfig) => {
+        parsedRules.value = parseRules(newConfig.rules)
+    })
 
     const deepCloneCells = (cells: Cell[][]): Cell[][] => {
         return cells.map((row) => row.map((cell) => ({ ...cell })))
@@ -68,6 +71,8 @@ export function useCellularAutomata(config: AutomataConfig) {
     }
 
     const updateAutomata = () => {
+        console.log("Updating automata using rules: ", parsedRules.value)
+
         nextCells.value = deepCloneCells(currentCells.value)
         clearRightmostFlags(nextCells.value)
 
