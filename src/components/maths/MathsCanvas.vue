@@ -20,13 +20,13 @@
         </template>
       </Toolbar>
     <CellularAutomata
-        :pressed-keys="props.pressedKeys"
-        :playback-tempo="props.playbackTempo"
+        :pressed-keys="pressedKeys"
+        :playback-tempo="playbackTempo"
         :cellular-automata-rules="cellularAutomataRules"
         @cellToggled="cellToggled"
         @gridUpdated="gridUpdated"
         @gridIsClear="gridIsClear"
-        :is-playing="props.isPlaying"
+        :is-playing="isPlaying"
     />
     </div>
     
@@ -38,19 +38,20 @@ import CellularAutomata from "./CellularAutomata.vue";
 import { Button, Toolbar } from "primevue";
 import CASettings from "./CASettings.vue";
 import { ref } from "vue";
+import { Note } from "@tonejs/midi/dist/Note";
 
 const settingsOpen = ref(false)
 const cellularAutomataRules = ref('B3/S2,3')
 
 const props = defineProps<{
-  pressedKeys: Set<string>;
+  pressedKeys: Set<Note>;
   isPlaying: boolean;
   playbackTempo: number;
 }>()
 
 const emit = defineEmits<{
-  (e: 'cellToggled', payload: { noteId: string; isOn: boolean }): void
-  (e: 'gridUpdated', activeNotes: Set<string>): void
+  (e: 'cellToggled', payload: { note: Note; isOn: boolean }): void
+  (e: 'gridUpdated', activeNotes: Set<Note>): void
   (e: 'gridIsClear'): void
   (e: 'update:playbackTempo', value: number): void
 }>()
@@ -63,11 +64,11 @@ const updatePlaybackTempo = (value: number) => {
   emit('update:playbackTempo', value);
 };
 
-const cellToggled = (payload: { noteId: string; isOn: boolean }) => {
+const cellToggled = (payload: { note: Note; isOn: boolean }) => {
   emit('cellToggled', payload);
 };
 
-const gridUpdated = (activeNotes: Set<string>) => {
+const gridUpdated = (activeNotes: Set<Note>) => {
   emit('gridUpdated', activeNotes);
 };
 

@@ -6,7 +6,7 @@
         </div>
         <div v-for="track in props.tracks" :key="track.id">
             <TrackControl
-                :track="track" 
+                :track-with-id="{ id: track.id, track: track.track }" 
                 :playback-tempo="props.playbackTempo"
             />
         </div>
@@ -15,11 +15,16 @@
 
 <script setup lang="ts">
 import { Button } from 'primevue';
-import { Track } from '../../types/types';
 import TrackControl from './TrackControl.vue';
+import { Track } from '@tonejs/midi';
+
+interface TrackWithId {
+    id: string,
+    track: Track,
+}
 
 const props = defineProps<{
-    tracks: Track[],
+    tracks: TrackWithId[],
     playbackTempo: number
 }>()
 

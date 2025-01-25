@@ -6,7 +6,6 @@ export function useTransport() {
     const transportError = ref<Error | null>(null)
 
     const togglePlayPause = async () => {
-        console.log(isPlaying.value)
         try {
             if (isPlaying.value) {
                 Tone.getTransport().pause()

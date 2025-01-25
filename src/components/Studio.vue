@@ -5,7 +5,8 @@ import TrackView from "./tracks/TrackView.vue"
 import {onUnmounted, ref, watch} from 'vue'
 import {usePianoSampler} from "../composables/usePianoSampler"
 import {useTransport} from "../composables/useTransport";
-import { Track } from "../types/types"
+import { Header, Track as ToneTrack } from "@tonejs/midi"
+import { Note } from "@tonejs/midi/dist/Note"
 import * as Tone from "tone"
 
 
@@ -18,37 +19,94 @@ const { isPlaying, transportError, togglePlayPause, cleanup } = useTransport()
 // - The keys are unique values without duplication
 // - The order of pressed keys is not important. Multiple pressed keys form a chord.
 
+interface Track {
+  id: string;
+  track: ToneTrack;
+}
+
 const track = ref<Track>({
   id: new Date().getTime().toString(),
-  name: "Untitled Track",
-  cells: [new Set<string>()],
-  volume: 1
+  track: new ToneTrack([
+    {
+      type: "trackName",
+      text: "Untitled Track",
+      deltaTime: 0,
+      meta: true
+    }
+  ], new Header()),
 })
 
 const tracks = ref<Track[]>([])
 
-const pressedKeys = ref<Set<string>>(new Set())
+const pressedKeys = ref<Set<Note>>(new Set())
 
 const playbackTempo = ref(180)
 
-watch(pressedKeys, (newPresssedKeys) => {
-  if (isPlaying.value || track.value.cells.length === 0) {
-    const newSet = new Set(newPresssedKeys)
-    track.value.cells.push(newSet)
-    console.log("Updated track:", track.value)
+watch(pressedKeys, (newPressedKeys) => {
+  if (isPlaying.value || track.value.track.notes.length === 0) {
+    const currentTicks = Tone.getTransport().ticks
+    
+    // clear any existing notes at this tick position to avoid duplicates
+    track.value.track.notes = track.value.track.notes.filter(note => note.ticks !== currentTicks)
+    
+    const notesToAdd: Note[] = []
+    newPressedKeys.forEach(note => {
+      const newNote = new Note({
+        midi: Tone.Frequency(note.name).toMidi(),
+        velocity: note.velocity,
+        ticks: currentTicks,
+      }, {
+        ticks: currentTicks + Tone.Time('4n').toTicks(),
+        velocity: note.velocity * 0.8,
+      }, new Header())
+      newNote.durationTicks = Tone.Time('4n').toTicks()
+      notesToAdd.push(newNote)
+    })
+    
+    track.value.track.notes.push(...notesToAdd)
+    
+    // sort notes by ticks, ensure proper playback order
+    track.value.track.notes.sort((a, b) => a.ticks - b.ticks)
   }
 })
 
-const handleCellToggled = (payload: { noteId: string, isOn: boolean }) => {
-  if (payload.isOn) pressedKeys.value.add(payload.noteId)
-  else pressedKeys.value.delete(payload.noteId)
-  pressedKeys.value = new Set(pressedKeys.value)
-};
+const handleCellToggled = (payload: { note: Note, isOn: boolean }) => {
+  const currentTicks = Tone.getTransport().ticks
+  
+  if (payload.isOn) {
+    const note = new Note({
+      midi: Tone.Frequency(payload.note.name).toMidi(),
+      velocity: payload.note.velocity,
+      ticks: currentTicks,
+    }, {
+      ticks: currentTicks + Tone.Time('4n').toTicks(),
+      velocity: payload.note.velocity * 0.8
+    }, new Header())
 
-const handleGridUpdated = (activeNotes: Set<string>) => {
+    note.durationTicks = Tone.Time('4n').toTicks()
+    
+    pressedKeys.value.add(note)
+  } else {
+    pressedKeys.value.forEach(existingNote => {
+      if (existingNote.name === payload.note.name) {
+        pressedKeys.value.delete(existingNote)
+      }
+    })
+  }
+  pressedKeys.value = new Set(pressedKeys.value)
+}
+
+const handleGridUpdated = (activeNotes: Set<Note>) => {
   if (!samplerLoaded.value) return
   try {
-    activeNotes.forEach((note) => sampler.triggerAttackRelease(note, '4n'))
+    activeNotes.forEach((note) => {
+      sampler.triggerAttackRelease(
+        note.name, 
+        '4n', 
+        undefined,
+        note.velocity
+      )
+    })
     pressedKeys.value = activeNotes
   } catch (err) {
     console.error("Error playing notes:", err)
@@ -59,6 +117,7 @@ const handleGridIsClear = () => {
   isPlaying.value = false
   pressedKeys.value.clear()
   tracks.value.push(track.value)
+  Tone.getTransport().pause()
 }
 
 const updatePlaybackTempo = (value: number) => {
@@ -66,7 +125,6 @@ const updatePlaybackTempo = (value: number) => {
   togglePlayPause()
   initialiseTransport()
   togglePlayPause()
-  console.log("Updated playback tempo:", playbackTempo.value)
 }
 
 const initialiseTransport = () => {

@@ -4,17 +4,20 @@ import p5 from 'p5'
 import { useP5Canvas } from '../../composables/useP5Canvas'
 import { useCellularAutomata } from '../../composables/useCellularAutomata'
 import {AutomataConfig, P5CanvasConfig} from "../../types/types"
+import { Note } from "@tonejs/midi/dist/Note"
+import * as Tone from 'tone'
+import { Header } from '@tonejs/midi'
 
 const props = defineProps<{
-  pressedKeys: Set<string>
+  pressedKeys: Set<Note>
   isPlaying: boolean
   cellularAutomataRules: string
   playbackTempo: number
 }>()
 
 const emit = defineEmits<{
-  (e: 'cellToggled', payload: { noteId: string; isOn: boolean }): void
-  (e: 'gridUpdated', activeNotes: Set<string>): void
+  (e: 'cellToggled', payload: { note: Note; isOn: boolean }): void
+  (e: 'gridUpdated', activeNotes: Set<Note>): void
   (e: 'gridIsClear'): void
 }>()
 
@@ -27,7 +30,6 @@ const automataConfig: Ref<AutomataConfig> = ref<AutomataConfig>({
 
 watch(() => props.cellularAutomataRules, (newRules) => {
   automataConfig.value.rules = newRules
-  console.log("Updated automata config: ", automataConfig.value)
 })
 
 const {
@@ -61,7 +63,21 @@ watch(() => props.playbackTempo, (newTempo) => {
 
 const canvasContainer = ref<HTMLElement | null>(null)
 
-const onCellToggled = (payload: { noteId: string; isOn: boolean }) => emit('cellToggled', payload)
+// Convert cell to Note object
+// const createNoteFromCell = (noteId: string): Note => {
+//   return new Note({
+//     midi: Tone.Frequency(noteId).toMidi(),
+//     velocity: 1,
+//     ticks: 0
+//   }, {
+//     ticks: Tone.Time('4n').toTicks(),
+//     velocity: 0
+//   }, new Header())
+// }
+
+const onCellToggled = (payload: { note: Note; isOn: boolean }) => {
+  emit('cellToggled', payload)
+}
 
 const sketch = (p5: p5) => {
   p5.setup = () => {
@@ -73,15 +89,18 @@ const sketch = (p5: p5) => {
     cellSize.value = Math.floor(canvasConfig.value.width / columnCount.value)
     p5.noLoop()
   }
+
   p5.draw = () => {
     p5.background(canvasConfig.value.backgroundColour)
     if (props.isPlaying) {
       const activeNotes = updateAutomata()
       if (activeNotes.size === 0) emit('gridIsClear')
+      
       emit('gridUpdated', activeNotes)
     }
     drawGrid()
   }
+
   const drawGrid = () => {
     p5.stroke('slategray')
     p5.textAlign(p5.CENTER, p5.CENTER)
@@ -104,7 +123,7 @@ const sketch = (p5: p5) => {
           if (cell.isRightmostChild) p5.fill('#213547')
           else p5.fill(255)
           p5.text(
-              `${cell.note.id}`,
+              `${cell.note.name}`,
               currentColumn * cellSize.value + cellSize.value / 2,
               rowIndex * cellSize.value + cellSize.value / 2
           )
@@ -127,14 +146,16 @@ const sketch = (p5: p5) => {
       if (column < 0 || column >= columnCount.value) return
       const cell = currentCells.value[row][column]
       cell.isOn = !cell.isOn
+      console.log("cellToggled in CA:", cell.note, cell.isOn)
       onCellToggled({
-        noteId: cell.note.id,
+        note: cell.note,
         isOn: cell.isOn,
       })
       p5.redraw()
     }
   }
 }
+
 const { p5Instance, initCanvas } = useP5Canvas()
 
 onMounted(() => initCanvas(sketch, canvasContainer.value))
@@ -148,6 +169,7 @@ watch(() => props.isPlaying,
     }
 )
 </script>
+
 <template>
   <div ref="canvasContainer"></div>
 </template>

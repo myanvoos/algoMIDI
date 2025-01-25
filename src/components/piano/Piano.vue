@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import PianoKeys from "./PianoKeys.vue";
-import {useTransport} from "../../composables/useTransport";
+import { Note } from "@tonejs/midi/dist/Note";
 
 const props = defineProps<{
-  pressedKeys: Set<string>
+  pressedKeys: Set<Note>
   isPlaying: boolean
 }>();
 

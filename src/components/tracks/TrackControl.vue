@@ -14,30 +14,33 @@
                 @click="handlePauseTrack"
             />
 
-            <h3>{{ track.name }}</h3>
             <input
-                type="range"
-                :value="track.volume"
-                min="0"
-                max="1"
-                step="0.01"
-                @change="updateVolume(($event.target as HTMLInputElement).value)"
+                type="text"
+                :value="trackWithId.track.name"
+                @dblclick="(e) => handleEditTrackName(e.target as HTMLInputElement)"
+                class="bg-transparent"
             />
+
             <Button icon="pi pi-trash" rounded />
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { Track } from '../../types/types';
+import { onUnmounted, ref } from 'vue';
+import { Track } from '@tonejs/midi';
 import { useTransport } from '../../composables/useTransport';
 import { usePianoSampler } from '../../composables/usePianoSampler';
 import * as Tone from 'tone';
 import { Button } from 'primevue';
 
-const props = defineProps<{
+interface TrackWithId {
+    id: string,
     track: Track,
+}
+
+const props = defineProps<{
+    trackWithId: TrackWithId,
     playbackTempo: number
 }>()
 
@@ -49,27 +52,47 @@ const trackIsPlaying = ref(false)
 const handlePlayTrack = () => {
     trackIsPlaying.value = true
 
-    Tone.getTransport().stop()
-    Tone.getTransport().cancel()
-    
-    Tone.getTransport().bpm.value = props.playbackTempo
+    const transport = Tone.getTransport()
+    transport.stop()
+    transport.cancel()
+    transport.bpm.value = props.playbackTempo
 
-    // Schedule all notes from the track
-    props.track.cells.forEach((noteSet, index) => {
-        if (noteSet.size > 0) {
-            Tone.getTransport().schedule((time) => {
-                noteSet.forEach((note) => {
-                    sampler.triggerAttackRelease(note, '4n', time, props.track.volume)
-                })
-            }, `0:${index}:0`)  // Schedule at quarter note positions
+    console.log("Playing track", props.trackWithId.track)
+
+    // Group notes by their start ticks to identify chords
+    const notesByTicks: { [ticks: number]: typeof props.trackWithId.track.notes[0][] } = {}
+    
+    props.trackWithId.track.notes.forEach(note => {
+        if (!notesByTicks[note.ticks]) {
+            notesByTicks[note.ticks] = []
         }
+        notesByTicks[note.ticks].push(note)
+    })
+
+    // Schedule each group of notes (chords or single notes)
+    Object.entries(notesByTicks).forEach(([ticks, notes]) => {
+        const startTime = `+${Tone.Ticks(parseInt(ticks)).toBarsBeatsSixteenths()}`
+        
+        transport.schedule((time) => {
+            // Play all notes in the chord simultaneously
+            notes.forEach(note => {
+                if (note.velocity > 0) {
+                    sampler.triggerAttackRelease(
+                        note.name,
+                        '4n',  // Using fixed duration for now
+                        time,
+                        note.velocity
+                    )
+                }
+            })
+        }, startTime)
     })
 
     // Start playback
     if (!isPlaying.value) {
         togglePlayPause()
     } else {
-        Tone.getTransport().start()
+        transport.start()
     }
 }
 
@@ -78,8 +101,10 @@ const handlePauseTrack = () => {
     Tone.getTransport().stop()
 }
 
-const updateVolume = (volume: string) => {
-    props.track.volume = parseFloat(volume)
+const handleEditTrackName = (input: HTMLInputElement) => {
+    input.focus()
+    props.trackWithId.track.name = input.value
 }
 
+onUnmounted(cleanup)
 </script>

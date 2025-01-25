@@ -31,7 +31,9 @@ export function usePianoSampler(config: SamplerConfig = DEFAULT_SAMPLER_CONFIG) 
         onerror: (err) => {
             console.error("Error loading sampler:", err);
             samplerError.value = err;
-        }
+        },
+        attack: 0,
+        curve: 'exponential',
     }).toDestination()
 
     return {
