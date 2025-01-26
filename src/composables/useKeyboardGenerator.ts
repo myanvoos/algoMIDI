@@ -1,6 +1,7 @@
 import { Header } from "@tonejs/midi";
 import { Note } from "@tonejs/midi/dist/Note";
 import * as Tone from "tone";
+import { ref } from "vue";
 
 export const baseNotes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
@@ -23,14 +24,13 @@ export const generateFullKeyboard = (): Note[] => {
 
       const noteId = `${noteName}${octave}`;
       
-      // Create a Note object with velocity information
       const note = new Note({
         midi: Tone.Frequency(noteId).toMidi(),
-        velocity: 0.7,  // Default velocity for keyboard notes
+        velocity: 0.7, 
         ticks: 0
       }, {
         ticks: Tone.Time('4n').toTicks(),
-        velocity: 0.5  // Release velocity
+        velocity: 0.5  
       }, new Header()
     );
 
@@ -41,4 +41,15 @@ export const generateFullKeyboard = (): Note[] => {
   return keys;
 };
 
-export const fullKeyboard = generateFullKeyboard();
+export function useKeyboardGenerator() {
+    const keyboard = ref(generateFullKeyboard());
+    
+    const regenerateKeyboard = () => {
+        keyboard.value = generateFullKeyboard();
+    };
+
+    return {
+        keyboard,
+        regenerateKeyboard
+    };
+}

@@ -1,59 +1,70 @@
 import { ref, computed, watch } from 'vue'
-import { Cell, AutomataConfig } from '../types/types'
 import { Note } from '@tonejs/midi/dist/Note'
 import * as Tone from 'tone'
 import { Header } from '@tonejs/midi'
 
-const baseNotes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-
-const SCALE_INTERVALS = {
-    'major': [0, 2, 4, 5, 7, 9, 11],  // Major scale (Ionian mode)
-    'minor': [0, 2, 3, 5, 7, 8, 10],  // Natural minor scale (Aeolian mode)
-    'chromatic': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-};
-
-export function createNoteGrid(config: AutomataConfig): Cell[][] {
-    const grid: Cell[][] = [];
-
-    const rootIndex = baseNotes.findIndex(note => note === config.rootNote);
-    if (rootIndex === -1) throw new Error('Invalid root note');
-
-    const intervals = SCALE_INTERVALS[config.scale];
-    const scaleNotes = intervals.map(interval => baseNotes[(rootIndex + interval) % 12]);
-
-    for (let row = 0; row < config.gridSize; row++) {
-        const gridRow: Cell[] = [];
-
-        for (let col = 0; col < config.gridSize; col++) {
-            const noteName = scaleNotes[(row + col) % scaleNotes.length];
-            const octave = 3 + Math.floor((row + col) / scaleNotes.length);
-            const noteId = `${noteName}${octave}`;
-            
-            // velocity between 0.3 and 0.8 for more musical dynamics
-            const velocity = 0.3 + Math.random() * 0.8;
-
-            const note = new Note({
-                midi: Tone.Frequency(noteId).toMidi(),
-                velocity: velocity,  
-                ticks: 0
-            }, {
-                ticks: Tone.Time('4n').toTicks(),
-                velocity: velocity * 0.8  // release velocity slightly lower for softer release
-            }, new Header());
-
-            gridRow.push({
-                note,
-                isOn: false,
-                isRightmostChild: false
-            });
-        }
-        grid.push(gridRow);
-    }
-    return grid;
+interface AutomataConfig {
+    gridSize: number;
+    scale: "major" | "minor" | "chromatic";
+    rootNote: string;
+    rules: string;
 }
 
+interface Cell {
+    note: Note;
+    isOn: boolean;
+    isRightmostChild: boolean;
+}
 
 export const useCellularAutomata = (config: AutomataConfig) => {
+    const baseNotes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+    
+    const SCALE_INTERVALS = {
+        'major': [0, 2, 4, 5, 7, 9, 11],  // Major scale (Ionian mode)
+        'minor': [0, 2, 3, 5, 7, 8, 10],  // Natural minor scale (Aeolian mode)
+        'chromatic': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    };
+    
+    const createNoteGrid = (config: AutomataConfig): Cell[][] => {
+        const grid: Cell[][] = [];
+    
+        const rootIndex = baseNotes.findIndex(note => note === config.rootNote);
+        if (rootIndex === -1) throw new Error('Invalid root note');
+    
+        const intervals = SCALE_INTERVALS[config.scale];
+        const scaleNotes = intervals.map(interval => baseNotes[(rootIndex + interval) % 12]);
+    
+        for (let row = 0; row < config.gridSize; row++) {
+            const gridRow: Cell[] = [];
+    
+            for (let col = 0; col < config.gridSize; col++) {
+                const noteName = scaleNotes[(row + col) % scaleNotes.length];
+                const octave = 3 + Math.floor((row + col) / scaleNotes.length);
+                const noteId = `${noteName}${octave}`;
+                
+                // velocity between 0.3 and 0.8 for more musical dynamics
+                const velocity = 0.3 + Math.random() * 0.8;
+    
+                const note = new Note({
+                    midi: Tone.Frequency(noteId).toMidi(),
+                    velocity: velocity,  
+                    ticks: 0
+                }, {
+                    ticks: Tone.Time('4n').toTicks(),
+                    velocity: velocity * 0.8  // release velocity slightly lower for softer release
+                }, new Header());
+    
+                gridRow.push({
+                    note,
+                    isOn: false,
+                    isRightmostChild: false
+                });
+            }
+            grid.push(gridRow);
+        }
+        return grid;
+    }
+    
     const currentCells = ref<Cell[][]>(createNoteGrid(config))
     const nextCells = ref<Cell[][]>([])
 

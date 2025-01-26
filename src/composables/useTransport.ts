@@ -1,7 +1,11 @@
 import * as Tone from 'tone'
-import {ref} from "vue"
+import {onUnmounted, ref} from "vue"
 
-export function useTransport() {
+interface TransportConfig {
+    playbackTempo: number
+}
+
+export function useTransport(config: TransportConfig) {
     const isPlaying = ref(false)
     const transportError = ref<Error | null>(null)
 
@@ -21,15 +25,23 @@ export function useTransport() {
         }
     }
 
+    const initialiseTransport = () => {
+        Tone.getTransport().stop()
+        Tone.getTransport().bpm.value = config.playbackTempo
+        Tone.getTransport().start()
+    }
+
     const cleanup = () => {
         Tone.getTransport().stop()
         Tone.getTransport().cancel()
     }
 
+    onUnmounted(cleanup)
+
     return {
         isPlaying,
         transportError,
         togglePlayPause,
-        cleanup
+        initialiseTransport
     }
 }

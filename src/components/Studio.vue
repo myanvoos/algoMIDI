@@ -2,151 +2,34 @@
 import Piano from "./piano/Piano.vue"
 import MathsCanvas from "./maths/MathsCanvas.vue"
 import TrackView from "./tracks/TrackView.vue"
-import {onUnmounted, ref, watch} from 'vue'
-import {usePianoSampler} from "../composables/usePianoSampler"
-import {useTransport} from "../composables/useTransport";
-import { Header, Track as ToneTrack } from "@tonejs/midi"
-import { Note } from "@tonejs/midi/dist/Note"
-import * as Tone from "tone"
+import {onMounted, ref, watch} from 'vue'
+import { Track as ToneTrack } from "@tonejs/midi"
 import { useMIDIStore } from "../stores/midiStore"
-
-
-const { sampler, samplerLoaded, samplerError } = usePianoSampler()
-const { isPlaying, transportError, togglePlayPause, cleanup } = useTransport()
-const { addTrack } = useMIDIStore()
-
-
-// NOTE:
-// Use Set instead of Array for storing pressed keys, for O(1) lookup time.
-// Certain conditions are satisfied:
-// - The keys are unique values without duplication
-// - The order of pressed keys is not important. Multiple pressed keys form a chord.
+import { useTrackControl } from "../composables/useTrackControl"
+import { useTransport } from "../composables/useTransport"
+import { usePianoSampler } from "../composables/usePianoSampler"
 
 interface Track {
   id: string;
   track: ToneTrack;
 }
 
-const track = ref<Track>({
-  id: new Date().getTime().toString(),
-  track: new ToneTrack([
-    {
-      type: "trackName",
-      text: "Untitled Track",
-      deltaTime: 0,
-      meta: true
-    }
-  ], new Header()),
-})
+const { addTrack } = useMIDIStore()
+const { sampler, samplerError, samplerLoaded } = usePianoSampler()
+const { pressedKeys, playbackTempo, handleCellToggled, handleGridUpdated, handleGridIsClear, updatePlaybackTempo } = useTrackControl({ sampler })
+const { isPlaying, transportError, togglePlayPause, initialiseTransport } = useTransport({ playbackTempo: playbackTempo.value })
 
 const tracks = ref<Track[]>([])
-const pressedKeys = ref<Set<Note>>(new Set())
-const playbackTempo = ref(180)
-
-watch(pressedKeys, (newPressedKeys) => {
-  if (isPlaying.value || track.value.track.notes.length === 0) {
-    const currentTicks = Tone.getTransport().ticks
-    
-    // clear any existing notes at this tick position to avoid duplicates
-    track.value.track.notes = track.value.track.notes.filter(note => note.ticks !== currentTicks)
-    
-    const notesToAdd: Note[] = []
-    newPressedKeys.forEach(note => {
-      const newNote = new Note({
-        midi: Tone.Frequency(note.name).toMidi(),
-        velocity: note.velocity,
-        ticks: currentTicks,
-      }, {
-        ticks: currentTicks + Tone.Time('4n').toTicks(),
-        velocity: note.velocity * 0.8,
-      }, new Header())
-      newNote.durationTicks = Tone.Time('4n').toTicks()
-      notesToAdd.push(newNote)
-    })
-    
-    track.value.track.notes.push(...notesToAdd)
-    
-    // sort notes by ticks, ensure proper playback order
-    track.value.track.notes.sort((a, b) => a.ticks - b.ticks)
-  }
-})
 
 watch(tracks, async (newTracks) => {
   console.log("Adding track to store:", newTracks)
   await addTrack(newTracks[0].track)
 })
 
-const handleCellToggled = (payload: { note: Note, isOn: boolean }) => {
-  const currentTicks = Tone.getTransport().ticks
-  
-  if (payload.isOn) {
-    const note = new Note({
-      midi: Tone.Frequency(payload.note.name).toMidi(),
-      velocity: payload.note.velocity,
-      ticks: currentTicks,
-    }, {
-      ticks: currentTicks + Tone.Time('4n').toTicks(),
-      velocity: payload.note.velocity * 0.8
-    }, new Header())
-
-    note.durationTicks = Tone.Time('4n').toTicks()
-    
-    pressedKeys.value.add(note)
-  } else {
-    pressedKeys.value.forEach(existingNote => {
-      if (existingNote.name === payload.note.name) {
-        pressedKeys.value.delete(existingNote)
-      }
-    })
-  }
-  pressedKeys.value = new Set(pressedKeys.value)
-}
-
-const handleGridUpdated = (activeNotes: Set<Note>) => {
-  if (!samplerLoaded.value) return
-  try {
-    activeNotes.forEach((note) => {
-      sampler.triggerAttackRelease(
-        note.name, 
-        '4n', 
-        undefined,
-        note.velocity
-      )
-    })
-    pressedKeys.value = activeNotes
-  } catch (err) {
-    console.error("Error playing notes:", err)
-  }
-}
-
-const handleGridIsClear = async () => {
-  console.log("Grid is clear")
-  isPlaying.value = false
-  pressedKeys.value.clear()
-  tracks.value.push(track.value)
-
-  console.log("Adding tracks:", track.value.track)
-  await addTrack(track.value.track)
-  
-  Tone.getTransport().pause()
-}
-
-const updatePlaybackTempo = (value: number) => {
-  playbackTempo.value = value
-  togglePlayPause()
+onMounted(() => {
   initialiseTransport()
-  togglePlayPause()
-}
+})
 
-const initialiseTransport = () => {
-  Tone.getTransport().stop()
-  Tone.getTransport().bpm.value = playbackTempo.value
-  Tone.getTransport().start()
-}
-
-onUnmounted(cleanup)
-
-initialiseTransport()
 </script>
 
 <template>
