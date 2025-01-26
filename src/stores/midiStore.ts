@@ -21,6 +21,7 @@ export const useMIDIStore = defineStore("midi", {
 				throw error;
 			} finally {
 				this.loading = false;
+				console.log("DB state: ", this.tracks)
 			}
 		},
 
@@ -59,6 +60,20 @@ export const useMIDIStore = defineStore("midi", {
 				this.tracks = this.tracks.filter((track) => track.id !== id);
 			} catch (error) {
 				console.error("Error deleting track:", error);
+				this.error = error as string;
+				throw error;
+			} finally {
+				this.loading = false;
+			}
+		},
+
+		async clearAllTracks() {
+			this.loading = true;
+			try {
+				await trackDB.clearAll();
+				this.tracks = [];
+			} catch (error) {
+				console.error("Error deleting all tracks:", error);
 				this.error = error as string;
 				throw error;
 			} finally {

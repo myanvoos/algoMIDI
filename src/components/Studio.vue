@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Track as ToneTrack } from "@tonejs/midi";
+import { Header, Track } from "@tonejs/midi";
 import * as Tone from "tone";
-import { onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { usePianoSampler } from "../composables/usePianoSampler";
 import { useTrackControl } from "../composables/useTrackControl";
 import { useTransport } from "../composables/useTransport";
@@ -9,34 +9,32 @@ import { useMIDIStore } from "../stores/midiStore";
 import MathsCanvas from "./maths/MathsCanvas.vue";
 import Piano from "./piano/Piano.vue";
 import TrackView from "./tracks/TrackView.vue";
-
-interface Track {
-	id: string;
-	track: ToneTrack;
-}
+import { useTrackState } from "../composables/useTrackState";
 
 const playbackTempo = ref(180);
 
 const { addTrack } = useMIDIStore();
+const { currentTrack, updateCurrentTrack } = useTrackState();
 const { sampler, samplerError, samplerLoaded } = usePianoSampler();
-const { isPlaying, transportError, togglePlayPause, initialiseTransport } =
-	useTransport({ playbackTempo: playbackTempo.value });
+const { isPlaying, transportError, togglePlayPause, initialiseTransport, handleStop } =
+	useTransport({ playbackTempo: playbackTempo.value, 
+    onStop: async () => {
+      console.log("Adding track: ", currentTrack.value.track)
+      await addTrack(currentTrack.value.track);
+    }
+   });
 const { pressedKeys, handleCellToggled, handleGridUpdated, handleGridIsClear } =
 	useTrackControl({
 		sampler,
-		isPlaying: isPlaying.value,
 		onStop: () => {
 			isPlaying.value = false;
 			Tone.getTransport().stop();
+			updateCurrentTrack({
+				id: crypto.randomUUID(),
+				track: new Track([], new Header()),
+			});
 		},
 	});
-
-const tracks = ref<Track[]>([]);
-
-watch(tracks, async (newTracks) => {
-	console.log("Adding track to store:", newTracks);
-	await addTrack(newTracks[0].track);
-});
 
 onMounted(() => {
 	initialiseTransport();
@@ -65,9 +63,11 @@ onMounted(() => {
           :playback-tempo="playbackTempo"
         />
         <Piano
+          :track="currentTrack"
           :pressed-keys="pressedKeys"
           :is-playing="isPlaying"
           @toggle-play-pause="togglePlayPause"
+          @end-track="handleStop"
         />
       </div>
     </div>

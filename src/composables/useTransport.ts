@@ -2,13 +2,15 @@ import * as Tone from "tone";
 import { onUnmounted, ref } from "vue";
 
 interface TransportConfig {
-	playbackTempo: number;
+	playbackTempo?: number;
+	onStop?: () => void;
 }
 
-export function useTransport(config: TransportConfig) {
-	const isPlaying = ref(false);
-	const transportError = ref<Error | null>(null);
+// singleton state
+const isPlaying = ref(false);
+const transportError = ref<Error | null>(null);
 
+export function useTransport(config: TransportConfig = {}) {
 	const togglePlayPause = async () => {
 		try {
 			if (isPlaying.value) {
@@ -27,15 +29,24 @@ export function useTransport(config: TransportConfig) {
 	};
 
 	const initialiseTransport = () => {
+		console.log("Initialising transport");
 		Tone.getTransport().stop();
-		Tone.getTransport().bpm.value = config.playbackTempo;
+		Tone.getTransport().bpm.value = config.playbackTempo ?? 120;
 		Tone.getTransport().start();
 	};
 
 	const cleanup = () => {
+		console.log("Cleaning up transport");
 		Tone.getTransport().stop();
 		Tone.getTransport().cancel();
 	};
+
+    const handleStop = () => {
+        console.log("Handling stop");
+        config.onStop?.();
+        Tone.getTransport().stop();
+        isPlaying.value = false;
+    }
 
 	onUnmounted(cleanup);
 
@@ -44,5 +55,6 @@ export function useTransport(config: TransportConfig) {
 		transportError,
 		togglePlayPause,
 		initialiseTransport,
+        handleStop,
 	};
 }

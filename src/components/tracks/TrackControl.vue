@@ -43,19 +43,25 @@ const props = defineProps<{
 	trackWithId: TrackWithId;
 }>();
 
-const { isPlaying, transportError, togglePlayPause, cleanup } = useTransport();
+const { transportError, handleStop } = useTransport({
+	onStop: () => {
+		trackIsPlaying.value = false;
+	}
+});
 const { sampler, samplerLoaded, samplerError } = usePianoSampler();
 
 const trackIsPlaying = ref(false);
+const trackId = ref<number | null>(null);
 
-const handlePlayTrack = () => {
+const handlePlayTrack = async () => {
+	if (trackId.value) {
+		Tone.getTransport().clear(trackId.value);
+	}
+	
 	trackIsPlaying.value = true;
-
 	const transport = Tone.getTransport();
 	transport.stop();
 	transport.cancel();
-
-	console.log("Playing track", props.trackWithId.track);
 
 	const notesByTicks: {
 		[ticks: number]: (typeof props.trackWithId.track.notes)[0][];
@@ -68,10 +74,11 @@ const handlePlayTrack = () => {
 		notesByTicks[note.ticks].push(note);
 	});
 
+	// schedule all notes, store the ID
 	Object.entries(notesByTicks).forEach(([ticks, notes]) => {
 		const startTime = `+${Tone.Ticks(Number.parseInt(ticks)).toBarsBeatsSixteenths()}`;
-
-		transport.schedule((time) => {
+		
+		trackId.value = transport.schedule((time) => {
 			notes.forEach((note) => {
 				if (note.velocity > 0) {
 					sampler.triggerAttackRelease(note.name, "4n", time, note.velocity);
@@ -80,16 +87,23 @@ const handlePlayTrack = () => {
 		}, startTime);
 	});
 
-	// Start playback
-	if (!isPlaying.value) {
-		togglePlayPause();
-	} else {
-		transport.start();
-	}
+	const lastTick = Math.max(...Object.keys(notesByTicks).map(Number));
+	const duration = Tone.Ticks(lastTick).toSeconds();
+	
+	transport.schedule(() => {
+		handlePauseTrack();
+	}, `+${duration + 0.1}`);
+
+	await Tone.start();
+	transport.start();
 };
 
 const handlePauseTrack = () => {
 	trackIsPlaying.value = false;
+	if (trackId.value) {
+		Tone.getTransport().clear(trackId.value);
+		trackId.value = null;
+	}
 	Tone.getTransport().stop();
 };
 
@@ -98,5 +112,10 @@ const handleEditTrackName = (input: HTMLInputElement) => {
 	props.trackWithId.track.name = input.value;
 };
 
-onUnmounted(cleanup);
+onUnmounted(() => {
+	if (trackId.value) {
+		Tone.getTransport().clear(trackId.value);
+	}
+});
+
 </script>

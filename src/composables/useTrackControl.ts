@@ -1,99 +1,60 @@
-import { Header } from "@tonejs/midi";
-import { Track as ToneTrack } from "@tonejs/midi";
+import { Header, Track } from "@tonejs/midi";
 import { Note } from "@tonejs/midi/dist/Note";
 import * as Tone from "tone";
-import { watch } from "vue";
-import { ref } from "vue";
+import { ref, watch } from "vue";
+import { useTrackState } from './useTrackState';
 import { useTransport } from "./useTransport";
-
-interface Track {
-	id: string;
-	track: ToneTrack;
-}
 
 interface TrackControlConfig {
 	sampler: Tone.Sampler | null;
-	isPlaying: boolean;
 	onStop: () => void;
 }
 
-export const useTrackControl = (config: TrackControlConfig) => {
+export function useTrackControl(config: TrackControlConfig) {
+	const { currentTrack } = useTrackState();
+	const { isPlaying } = useTransport();
 	const pressedKeys = ref<Set<Note>>(new Set());
-	const track = ref<Track>({
-		id: new Date().getTime().toString(),
-		track: new ToneTrack(
-			[
-				{
-					type: "trackName",
-					text: "Untitled Track",
-					deltaTime: 0,
-					meta: true,
-				},
-			],
-			new Header(),
-		),
-	});
 
 	watch(pressedKeys, (newPressedKeys) => {
-		if (config.isPlaying || track.value.track.notes.length === 0) {
-			const currentTicks = Tone.getTransport().ticks;
-
-			// clear any existing notes at this tick position to avoid duplicates
-			track.value.track.notes = track.value.track.notes.filter(
-				(note) => note.ticks !== currentTicks,
-			);
-
-			const notesToAdd: Note[] = [];
-			newPressedKeys.forEach((note) => {
-				const newNote = new Note(
-					{
-						midi: Tone.Frequency(note.name).toMidi(),
-						velocity: note.velocity,
-						ticks: currentTicks,
-					},
-					{
-						ticks: currentTicks + Tone.Time("4n").toTicks(),
-						velocity: note.velocity * 0.8,
-					},
-					new Header(),
-				);
-				newNote.durationTicks = Tone.Time("4n").toTicks();
-				notesToAdd.push(newNote);
-			});
-
-			track.value.track.notes.push(...notesToAdd);
-
-			// sort notes by ticks, ensure proper playback order
-			track.value.track.notes.sort((a, b) => a.ticks - b.ticks);
+		if (!isPlaying.value) {
+			console.log("Not playing, returning");
+			return;
 		}
-	});
-
-	const handleCellToggled = (payload: { note: Note; isOn: boolean }) => {
+		
 		const currentTicks = Tone.getTransport().ticks;
-
-		if (payload.isOn) {
-			const note = new Note(
+		
+		currentTrack.value.track.notes = currentTrack.value.track.notes.filter(
+			(note) => note.ticks !== currentTicks
+		);
+		
+		const notesToAdd: Note[] = Array.from(newPressedKeys).map(note => {
+			const newNote = new Note(
 				{
-					midi: Tone.Frequency(payload.note.name).toMidi(),
-					velocity: payload.note.velocity,
+					midi: Tone.Frequency(note.name).toMidi(),
+					velocity: note.velocity,
 					ticks: currentTicks,
 				},
 				{
 					ticks: currentTicks + Tone.Time("4n").toTicks(),
-					velocity: payload.note.velocity * 0.8,
+					velocity: note.velocity * 0.8,
 				},
-				new Header(),
+				new Header()
 			);
+			newNote.durationTicks = Tone.Time("4n").toTicks();
+			return newNote;
+		});
+		
+		currentTrack.value.track.notes.push(...notesToAdd);
+		currentTrack.value.track.notes.sort((a, b) => a.ticks - b.ticks);
 
-			note.durationTicks = Tone.Time("4n").toTicks();
+		console.log("Track updated:", currentTrack.value.track);
+	}, { deep: true });
 
-			pressedKeys.value.add(note);
+	const handleCellToggled = (payload: { note: Note; isOn: boolean }) => {
+		if (payload.isOn) {
+			pressedKeys.value.add(payload.note);
 		} else {
-			pressedKeys.value.forEach((existingNote) => {
-				if (existingNote.name === payload.note.name) {
-					pressedKeys.value.delete(existingNote);
-				}
-			});
+			pressedKeys.value.delete(payload.note);
 		}
 		pressedKeys.value = new Set(pressedKeys.value);
 	};
@@ -122,20 +83,32 @@ export const useTrackControl = (config: TrackControlConfig) => {
 		Tone.getTransport().stop();
 	};
 
-	// const updatePlaybackTempo = (value: number) => {
-	//   playbackTempo.value = value
-	//   config.togglePlayPause()
-	//   config.initialiseTransport()
-	//   config.togglePlayPause()
-	// }
+	const recordNote = (note: Note) => {
+		const currentTicks = Tone.getTransport().ticks;
+		return {
+			...note,
+			ticks: currentTicks,
+			durationTicks: Tone.Time("4n").toTicks()
+		};
+	};
+
+	const playNote = (note: Note) => {
+		if (!config.sampler) return;
+		config.sampler.triggerAttackRelease(
+			note.name,
+			"4n",
+			undefined,
+			note.velocity
+		);
+	};
 
 	return {
-		track,
 		pressedKeys,
-		// playbackTempo,
-		// updatePlaybackTempo,
 		handleCellToggled,
 		handleGridUpdated,
 		handleGridIsClear,
+		recordNote,
+		playNote,
+		updatePressedKeys: (keys: Set<Note>) => pressedKeys.value = keys
 	};
-};
+}

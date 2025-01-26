@@ -4,7 +4,7 @@
             <h2 class="text-2xl font-bold">Tracks</h2>
             <div class="flex items-center space-x-4">
                 <Button icon="pi pi-plus" rounded />
-                <Button @click="midiStore.clearAll" label="Clear All" rounded />
+                <Button @click="midiStore.clearAllTracks" label="Clear All" rounded />
             </div>
         </div>
 
@@ -17,7 +17,7 @@
         </div>
 
         <div v-else-if="midiStore.tracks.length === 0" class="text-center py-4">
-            No tracks available
+            No tracks available.
         </div>
 
         <div v-else v-for="track in midiStore.tracks" :key="track.id">
@@ -40,7 +40,7 @@ const loadTracks = async () => {
 	loading.value = true;
 	error.value = null;
 	try {
-		await midiStore.getTracks();
+		await midiStore.getAllTracks();
 	} catch (err) {
 		error.value = err instanceof Error ? err.message : "Failed to load tracks";
 		console.error("Error loading tracks:", err);
