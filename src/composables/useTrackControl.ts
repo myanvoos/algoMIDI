@@ -117,7 +117,6 @@ export const useTrackControl = (config: TrackControlConfig) => {
 	};
 
 	const handleGridIsClear = async () => {
-		console.log("TRACK CONTROL: grid is clear");
 		config.onStop();
 		pressedKeys.value.clear();
 		Tone.getTransport().stop();
