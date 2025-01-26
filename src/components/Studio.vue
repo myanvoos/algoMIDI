@@ -8,10 +8,13 @@ import {useTransport} from "../composables/useTransport";
 import { Header, Track as ToneTrack } from "@tonejs/midi"
 import { Note } from "@tonejs/midi/dist/Note"
 import * as Tone from "tone"
+import { useMIDIStore } from "../stores/midiStore"
 
 
 const { sampler, samplerLoaded, samplerError } = usePianoSampler()
 const { isPlaying, transportError, togglePlayPause, cleanup } = useTransport()
+const { addTrack } = useMIDIStore()
+
 
 // NOTE:
 // Use Set instead of Array for storing pressed keys, for O(1) lookup time.
@@ -37,9 +40,7 @@ const track = ref<Track>({
 })
 
 const tracks = ref<Track[]>([])
-
 const pressedKeys = ref<Set<Note>>(new Set())
-
 const playbackTempo = ref(180)
 
 watch(pressedKeys, (newPressedKeys) => {
@@ -68,6 +69,11 @@ watch(pressedKeys, (newPressedKeys) => {
     // sort notes by ticks, ensure proper playback order
     track.value.track.notes.sort((a, b) => a.ticks - b.ticks)
   }
+})
+
+watch(tracks, async (newTracks) => {
+  console.log("Adding track to store:", newTracks)
+  await addTrack(newTracks[0].track)
 })
 
 const handleCellToggled = (payload: { note: Note, isOn: boolean }) => {
@@ -113,10 +119,15 @@ const handleGridUpdated = (activeNotes: Set<Note>) => {
   }
 }
 
-const handleGridIsClear = () => {
+const handleGridIsClear = async () => {
+  console.log("Grid is clear")
   isPlaying.value = false
   pressedKeys.value.clear()
   tracks.value.push(track.value)
+
+  console.log("Adding tracks:", track.value.track)
+  await addTrack(track.value.track)
+  
   Tone.getTransport().pause()
 }
 
@@ -148,10 +159,7 @@ initialiseTransport()
     </div>
     <div class="studio-layout">
       <div class="track-view-container">
-        <TrackView 
-          :tracks="tracks" 
-          :playback-tempo="playbackTempo"
-        />
+        <TrackView />
       </div>
       <div class="piano-section">
         <MathsCanvas

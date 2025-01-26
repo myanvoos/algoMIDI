@@ -41,7 +41,6 @@ interface TrackWithId {
 
 const props = defineProps<{
     trackWithId: TrackWithId,
-    playbackTempo: number
 }>()
 
 const { isPlaying, transportError, togglePlayPause, cleanup } = useTransport()
@@ -55,11 +54,9 @@ const handlePlayTrack = () => {
     const transport = Tone.getTransport()
     transport.stop()
     transport.cancel()
-    transport.bpm.value = props.playbackTempo
 
     console.log("Playing track", props.trackWithId.track)
 
-    // Group notes by their start ticks to identify chords
     const notesByTicks: { [ticks: number]: typeof props.trackWithId.track.notes[0][] } = {}
     
     props.trackWithId.track.notes.forEach(note => {
@@ -69,17 +66,15 @@ const handlePlayTrack = () => {
         notesByTicks[note.ticks].push(note)
     })
 
-    // Schedule each group of notes (chords or single notes)
     Object.entries(notesByTicks).forEach(([ticks, notes]) => {
         const startTime = `+${Tone.Ticks(parseInt(ticks)).toBarsBeatsSixteenths()}`
         
         transport.schedule((time) => {
-            // Play all notes in the chord simultaneously
             notes.forEach(note => {
                 if (note.velocity > 0) {
                     sampler.triggerAttackRelease(
                         note.name,
-                        '4n',  // Using fixed duration for now
+                        '4n', 
                         time,
                         note.velocity
                     )

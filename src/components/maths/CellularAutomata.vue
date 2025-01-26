@@ -5,8 +5,6 @@ import { useP5Canvas } from '../../composables/useP5Canvas'
 import { useCellularAutomata } from '../../composables/useCellularAutomata'
 import {AutomataConfig, P5CanvasConfig} from "../../types/types"
 import { Note } from "@tonejs/midi/dist/Note"
-import * as Tone from 'tone'
-import { Header } from '@tonejs/midi'
 
 const props = defineProps<{
   pressedKeys: Set<Note>
@@ -62,18 +60,6 @@ watch(() => props.playbackTempo, (newTempo) => {
 })
 
 const canvasContainer = ref<HTMLElement | null>(null)
-
-// Convert cell to Note object
-// const createNoteFromCell = (noteId: string): Note => {
-//   return new Note({
-//     midi: Tone.Frequency(noteId).toMidi(),
-//     velocity: 1,
-//     ticks: 0
-//   }, {
-//     ticks: Tone.Time('4n').toTicks(),
-//     velocity: 0
-//   }, new Header())
-// }
 
 const onCellToggled = (payload: { note: Note; isOn: boolean }) => {
   emit('cellToggled', payload)
@@ -146,7 +132,6 @@ const sketch = (p5: p5) => {
       if (column < 0 || column >= columnCount.value) return
       const cell = currentCells.value[row][column]
       cell.isOn = !cell.isOn
-      console.log("cellToggled in CA:", cell.note, cell.isOn)
       onCellToggled({
         note: cell.note,
         isOn: cell.isOn,
