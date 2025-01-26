@@ -27,30 +27,29 @@
 </template>
 
 <script setup lang="ts">
-import { Button } from 'primevue';
-import TrackControl from './TrackControl.vue';
-import { useMIDIStore } from '../../stores/midiStore';
-import { ref, onMounted } from 'vue';
+import { Button } from "primevue";
+import { onMounted, ref } from "vue";
+import { useMIDIStore } from "../../stores/midiStore";
+import TrackControl from "./TrackControl.vue";
 
 const loading = ref(false);
 const error = ref<string | null>(null);
 const midiStore = useMIDIStore();
 
 const loadTracks = async () => {
-    loading.value = true;
-    error.value = null;
-    try {
-        await midiStore.getTracks();
-    } catch (err) {
-        error.value = err instanceof Error ? err.message : 'Failed to load tracks';
-        console.error('Error loading tracks:', err);
-    } finally {
-        loading.value = false;
-    }
+	loading.value = true;
+	error.value = null;
+	try {
+		await midiStore.getTracks();
+	} catch (err) {
+		error.value = err instanceof Error ? err.message : "Failed to load tracks";
+		console.error("Error loading tracks:", err);
+	} finally {
+		loading.value = false;
+	}
 };
 
 onMounted(() => {
-    loadTracks();
+	loadTracks();
 });
-
 </script>

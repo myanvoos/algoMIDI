@@ -28,13 +28,13 @@
 		}
 	},
 	"overrides": [
-		{ 
+		{
 			"include": ["*.vue"],
 			"linter": {
 				"rules": {
 					"style": {
-					"useConst": "off",
-					"useImportType": "off"
+						"useConst": "off",
+						"useImportType": "off"
 					}
 				}
 			}

@@ -1,15 +1,13 @@
 <script setup lang="ts">
-import PianoKeys from "./PianoKeys.vue";
 import { Note } from "@tonejs/midi/dist/Note";
+import PianoKeys from "./PianoKeys.vue";
 
 const props = defineProps<{
-  pressedKeys: Set<Note>
-  isPlaying: boolean
+	pressedKeys: Set<Note>;
+	isPlaying: boolean;
 }>();
 
-const emit = defineEmits<{
-  (e: 'togglePlayPause'): void
-}>()
+const emit = defineEmits<(e: "togglePlayPause") => void>();
 </script>
 
 <template>

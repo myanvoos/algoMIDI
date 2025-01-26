@@ -51,51 +51,48 @@
 </template>
 
 <script setup lang="ts">
-import Card from 'primevue/card';
-import Button from 'primevue/button';
-import Textarea from 'primevue/textarea';
-import { ref } from 'vue';
+import Button from "primevue/button";
+import Card from "primevue/card";
+import Textarea from "primevue/textarea";
+import { ref } from "vue";
 
-const customRules = ref('B3/S2,3');
+const customRules = ref("B3/S2,3");
 
 const updateCustomRules = (value: string) => {
-  customRules.value = value;
-  emit('update:cellular-automata-rules', customRules.value);
+	customRules.value = value;
+	emit("update:cellular-automata-rules", customRules.value);
 };
 
 const presets = [
-  { name: 'Game of Life', rules: 'B3/S2,3' },
-  { name: 'Day & Night', rules: 'B3,6,7,8/S3,4,6,7,8' },
-  { name: 'HighLife', rules: 'B3,6/S2,3' },
-  { name: 'Seeds', rules: 'B2/S' },
+	{ name: "Game of Life", rules: "B3/S2,3" },
+	{ name: "Day & Night", rules: "B3,6,7,8/S3,4,6,7,8" },
+	{ name: "HighLife", rules: "B3,6/S2,3" },
+	{ name: "Seeds", rules: "B2/S" },
 ];
 
 const props = defineProps<{
-  cellularAutomataRules: string;
-  playbackTempo: number;
-}>()
+	cellularAutomataRules: string;
+	playbackTempo: number;
+}>();
 
 const emit = defineEmits<{
-  (e: 'update:cellular-automata-rules', value: string): void;
-  (e: 'update:playback-tempo', value: number): void;
-}>()
+	(e: "update:cellular-automata-rules", value: string): void;
+	(e: "update:playback-tempo", value: number): void;
+}>();
 
 const selectedPreset = ref<string | undefined>(
-  presets.find(p => p.rules === props.cellularAutomataRules)?.name
+	presets.find((p) => p.rules === props.cellularAutomataRules)?.name,
 );
 
 const selectPreset = (preset: { name: string; rules: string }) => {
-  customRules.value = preset.rules;
-  selectedPreset.value = preset.name;
-  emit('update:cellular-automata-rules', customRules.value);
+	customRules.value = preset.rules;
+	selectedPreset.value = preset.name;
+	emit("update:cellular-automata-rules", customRules.value);
 };
-
 
 const updatePlaybackTempo = (value: number) => {
-  emit('update:playback-tempo', value);
+	emit("update:playback-tempo", value);
 };
-
-
 </script>
 
 <style scoped>

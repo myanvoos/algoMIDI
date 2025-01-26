@@ -27,79 +27,76 @@
 </template>
 
 <script setup lang="ts">
-import { onUnmounted, ref } from 'vue';
-import { Track } from '@tonejs/midi';
-import { useTransport } from '../../composables/useTransport';
-import { usePianoSampler } from '../../composables/usePianoSampler';
-import * as Tone from 'tone';
-import { Button } from 'primevue';
+import { Track } from "@tonejs/midi";
+import { Button } from "primevue";
+import * as Tone from "tone";
+import { onUnmounted, ref } from "vue";
+import { usePianoSampler } from "../../composables/usePianoSampler";
+import { useTransport } from "../../composables/useTransport";
 
 interface TrackWithId {
-    id: string,
-    track: Track,
+	id: string;
+	track: Track;
 }
 
 const props = defineProps<{
-    trackWithId: TrackWithId,
-}>()
+	trackWithId: TrackWithId;
+}>();
 
-const { isPlaying, transportError, togglePlayPause, cleanup } = useTransport()
-const { sampler, samplerLoaded, samplerError } = usePianoSampler()
+const { isPlaying, transportError, togglePlayPause, cleanup } = useTransport();
+const { sampler, samplerLoaded, samplerError } = usePianoSampler();
 
-const trackIsPlaying = ref(false)
+const trackIsPlaying = ref(false);
 
 const handlePlayTrack = () => {
-    trackIsPlaying.value = true
+	trackIsPlaying.value = true;
 
-    const transport = Tone.getTransport()
-    transport.stop()
-    transport.cancel()
+	const transport = Tone.getTransport();
+	transport.stop();
+	transport.cancel();
 
-    console.log("Playing track", props.trackWithId.track)
+	console.log("Playing track", props.trackWithId.track);
 
-    const notesByTicks: { [ticks: number]: typeof props.trackWithId.track.notes[0][] } = {}
-    
-    props.trackWithId.track.notes.forEach(note => {
-        if (!notesByTicks[note.ticks]) {
-            notesByTicks[note.ticks] = []
-        }
-        notesByTicks[note.ticks].push(note)
-    })
+	const notesByTicks: {
+		[ticks: number]: (typeof props.trackWithId.track.notes)[0][];
+	} = {};
 
-    Object.entries(notesByTicks).forEach(([ticks, notes]) => {
-        const startTime = `+${Tone.Ticks(parseInt(ticks)).toBarsBeatsSixteenths()}`
-        
-        transport.schedule((time) => {
-            notes.forEach(note => {
-                if (note.velocity > 0) {
-                    sampler.triggerAttackRelease(
-                        note.name,
-                        '4n', 
-                        time,
-                        note.velocity
-                    )
-                }
-            })
-        }, startTime)
-    })
+	props.trackWithId.track.notes.forEach((note) => {
+		if (!notesByTicks[note.ticks]) {
+			notesByTicks[note.ticks] = [];
+		}
+		notesByTicks[note.ticks].push(note);
+	});
 
-    // Start playback
-    if (!isPlaying.value) {
-        togglePlayPause()
-    } else {
-        transport.start()
-    }
-}
+	Object.entries(notesByTicks).forEach(([ticks, notes]) => {
+		const startTime = `+${Tone.Ticks(Number.parseInt(ticks)).toBarsBeatsSixteenths()}`;
+
+		transport.schedule((time) => {
+			notes.forEach((note) => {
+				if (note.velocity > 0) {
+					sampler.triggerAttackRelease(note.name, "4n", time, note.velocity);
+				}
+			});
+		}, startTime);
+	});
+
+	// Start playback
+	if (!isPlaying.value) {
+		togglePlayPause();
+	} else {
+		transport.start();
+	}
+};
 
 const handlePauseTrack = () => {
-    trackIsPlaying.value = false
-    Tone.getTransport().stop()
-}
+	trackIsPlaying.value = false;
+	Tone.getTransport().stop();
+};
 
 const handleEditTrackName = (input: HTMLInputElement) => {
-    input.focus()
-    props.trackWithId.track.name = input.value
-}
+	input.focus();
+	props.trackWithId.track.name = input.value;
+};
 
-onUnmounted(cleanup)
+onUnmounted(cleanup);
 </script>

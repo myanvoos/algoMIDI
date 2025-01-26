@@ -1,35 +1,46 @@
 <script setup lang="ts">
-import Piano from "./piano/Piano.vue"
-import MathsCanvas from "./maths/MathsCanvas.vue"
-import TrackView from "./tracks/TrackView.vue"
-import {onMounted, ref, watch} from 'vue'
-import { Track as ToneTrack } from "@tonejs/midi"
-import { useMIDIStore } from "../stores/midiStore"
-import { useTrackControl } from "../composables/useTrackControl"
-import { useTransport } from "../composables/useTransport"
-import { usePianoSampler } from "../composables/usePianoSampler"
+import { Track as ToneTrack } from "@tonejs/midi";
+import * as Tone from "tone";
+import { onMounted, ref, watch } from "vue";
+import { usePianoSampler } from "../composables/usePianoSampler";
+import { useTrackControl } from "../composables/useTrackControl";
+import { useTransport } from "../composables/useTransport";
+import { useMIDIStore } from "../stores/midiStore";
+import MathsCanvas from "./maths/MathsCanvas.vue";
+import Piano from "./piano/Piano.vue";
+import TrackView from "./tracks/TrackView.vue";
 
 interface Track {
-  id: string;
-  track: ToneTrack;
+	id: string;
+	track: ToneTrack;
 }
 
-const { addTrack } = useMIDIStore()
-const { sampler, samplerError, samplerLoaded } = usePianoSampler()
-const { pressedKeys, playbackTempo, handleCellToggled, handleGridUpdated, handleGridIsClear, updatePlaybackTempo } = useTrackControl({ sampler })
-const { isPlaying, transportError, togglePlayPause, initialiseTransport } = useTransport({ playbackTempo: playbackTempo.value })
+const playbackTempo = ref(180);
 
-const tracks = ref<Track[]>([])
+const { addTrack } = useMIDIStore();
+const { sampler, samplerError, samplerLoaded } = usePianoSampler();
+const { isPlaying, transportError, togglePlayPause, initialiseTransport } =
+	useTransport({ playbackTempo: playbackTempo.value });
+const { pressedKeys, handleCellToggled, handleGridUpdated, handleGridIsClear } =
+	useTrackControl({
+		sampler,
+		isPlaying: isPlaying.value,
+		onStop: () => {
+			isPlaying.value = false;
+			Tone.getTransport().stop();
+		},
+	});
+
+const tracks = ref<Track[]>([]);
 
 watch(tracks, async (newTracks) => {
-  console.log("Adding track to store:", newTracks)
-  await addTrack(newTracks[0].track)
-})
+	console.log("Adding track to store:", newTracks);
+	await addTrack(newTracks[0].track);
+});
 
 onMounted(() => {
-  initialiseTransport()
-})
-
+	initialiseTransport();
+});
 </script>
 
 <template>
@@ -52,7 +63,6 @@ onMounted(() => {
           @gridIsClear="handleGridIsClear"
           :is-playing="isPlaying"
           :playback-tempo="playbackTempo"
-          @update:playback-tempo="updatePlaybackTempo"
         />
         <Piano
           :pressed-keys="pressedKeys"

@@ -1,70 +1,61 @@
 {
-  "name": "signalalgorithm",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vue-tsc -b && vite build",
-    "preview": "vite preview",
-    "test": "jest"
-  },
-  "dependencies": {
-    "@primevue/themes": "^4.2.5",
-    "@tonejs/midi": "^2.0.28",
-    "idb": "^8.0.1",
-    "jest-environment-jsdom": "^29.7.0",
-    "midi-writer-js": "^3.1.1",
-    "p5": "^1.11.0",
-    "p5vue": "^0.0.7",
-    "pinia": "^2.3.1",
-    "primeicons": "^7.0.0",
-    "primevue": "^4.2.5",
-    "tone": "^15.0.4",
-    "vue": "^3.5.12"
-  },
-  "devDependencies": {
-    "@babel/preset-env": "^7.26.0",
-    "@babel/preset-typescript": "^7.26.0",
-    "@biomejs/biome": "1.9.4",
-    "@nuxtjs/tailwindcss": "^6.13.1",
-    "@testing-library/jest-dom": "^6.6.3",
-    "@testing-library/vue": "^8.1.0",
-    "@types/jest": "^29.5.14",
-    "@vitejs/plugin-vue": "^5.1.4",
-    "@vue/vue3-jest": "^29.2.6",
-    "autoprefixer": "^10.4.20",
-    "babel-jest": "^29.7.0",
-    "jest": "^29.7.0",
-    "postcss": "^8.4.47",
-    "tailwindcss": "^3.4.14",
-    "ts-jest": "^29.2.5",
-    "typescript": "~5.6.2",
-    "vite": "^5.4.9",
-    "vue-tsc": "^2.1.6"
-  },
-  "jest": {
-    "preset": "ts-jest",
-    "testEnvironment": "jsdom",
-    "transform": {
-      "^.+\\.vue$": "@vue/vue3-jest",
-      "^.+\\.ts$": "ts-jest",
-      "^.+\\.js$": "babel-jest"
-    },
-    "moduleFileExtensions": [
-      "ts",
-      "js",
-      "vue",
-      "json"
-    ],
-    "transformIgnorePatterns": [
-      "/node_modules/"
-    ],
-    "setupFilesAfterEnv": [
-      "@testing-library/jest-dom"
-    ],
-    "moduleNameMapper": {
-      "^@/(.*)$": "<rootDir>/src/$1"
-    }
-  }
+	"name": "signalalgorithm",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"build": "vue-tsc -b && vite build",
+		"preview": "vite preview",
+		"test": "jest"
+	},
+	"dependencies": {
+		"@primevue/themes": "^4.2.5",
+		"@tonejs/midi": "^2.0.28",
+		"idb": "^8.0.1",
+		"jest-environment-jsdom": "^29.7.0",
+		"midi-writer-js": "^3.1.1",
+		"p5": "^1.11.0",
+		"p5vue": "^0.0.7",
+		"pinia": "^2.3.1",
+		"primeicons": "^7.0.0",
+		"primevue": "^4.2.5",
+		"tone": "^15.0.4",
+		"vue": "^3.5.12"
+	},
+	"devDependencies": {
+		"@babel/preset-env": "^7.26.0",
+		"@babel/preset-typescript": "^7.26.0",
+		"@biomejs/biome": "1.9.4",
+		"@nuxtjs/tailwindcss": "^6.13.1",
+		"@testing-library/jest-dom": "^6.6.3",
+		"@testing-library/vue": "^8.1.0",
+		"@types/jest": "^29.5.14",
+		"@vitejs/plugin-vue": "^5.1.4",
+		"@vue/vue3-jest": "^29.2.6",
+		"autoprefixer": "^10.4.20",
+		"babel-jest": "^29.7.0",
+		"jest": "^29.7.0",
+		"postcss": "^8.4.47",
+		"tailwindcss": "^3.4.14",
+		"ts-jest": "^29.2.5",
+		"typescript": "~5.6.2",
+		"vite": "^5.4.9",
+		"vue-tsc": "^2.1.6"
+	},
+	"jest": {
+		"preset": "ts-jest",
+		"testEnvironment": "jsdom",
+		"transform": {
+			"^.+\\.vue$": "@vue/vue3-jest",
+			"^.+\\.ts$": "ts-jest",
+			"^.+\\.js$": "babel-jest"
+		},
+		"moduleFileExtensions": ["ts", "js", "vue", "json"],
+		"transformIgnorePatterns": ["/node_modules/"],
+		"setupFilesAfterEnv": ["@testing-library/jest-dom"],
+		"moduleNameMapper": {
+			"^@/(.*)$": "<rootDir>/src/$1"
+		}
+	}
 }
