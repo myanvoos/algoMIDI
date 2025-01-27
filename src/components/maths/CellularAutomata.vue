@@ -55,7 +55,7 @@ watch(
 	},
 );
 
-const { currentCells, rowCount, columnCount, updateAutomata } = useAutomata(
+const { currentCells, rowCount, columnCount, updateAutomata, clearGrid } = useAutomata(
 	automataConfig.value,
 );
 
@@ -71,7 +71,7 @@ const automataState = computed(() => ({
 	cellSize: cellSize.value,
 }));
 
-const { drawGrid, handleMouseClick, updateGrid } = useAutomataRenderer({
+const { drawGrid, handleMouseClick, updateGrid, clearGridDisplay } = useAutomataRenderer({
 	automataConfig: automataConfig,
 	automataState: automataState,
 	callbacks: {
@@ -99,7 +99,7 @@ watch(
 	},
 );
 
-const { p5Instance, initCanvas, createSketch } = useP5Canvas();
+const { p5Instance, initCanvas, createSketch, redraw } = useP5Canvas();
 
 const sketch = (p5: p5) => {
 	const sketchFn = createSketch(canvasConfig, {
@@ -110,6 +110,19 @@ const sketch = (p5: p5) => {
 
 	sketchFn(p5);
 };
+
+watch(
+	() => props.pressedKeys,
+	(newKeys) => {
+		if (newKeys.size === 0) {
+			clearGrid();
+			if (p5Instance.value) {
+				clearGridDisplay(p5Instance.value);
+				redraw();
+			}
+		}
+	},
+);
 
 watch(
 	canvasContainer,

@@ -99,9 +99,15 @@ export const useAutomataRenderer = (config: AutomataRendererConfig) => {
 		}
 	};
 
+	const clearGridDisplay = (p5: p5) => {
+		p5.background(255);
+		drawGrid(p5);
+	};
+
 	return {
 		drawGrid,
 		handleMouseClick,
 		updateGrid,
+		clearGridDisplay,
 	};
 };

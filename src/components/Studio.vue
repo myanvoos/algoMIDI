@@ -4,35 +4,37 @@ import * as Tone from "tone";
 import { computed, onMounted, ref, watch } from "vue";
 import { usePianoSampler } from "../composables/usePianoSampler";
 import { useTrackControl } from "../composables/useTrackControl";
+import { useTrackState } from "../composables/useTrackState";
 import { useTransport } from "../composables/useTransport";
 import { useMIDIStore } from "../stores/midiStore";
 import MathsCanvas from "./maths/MathsCanvas.vue";
 import Piano from "./piano/Piano.vue";
 import TrackView from "./tracks/TrackView.vue";
-import { useTrackState } from "../composables/useTrackState";
 
 const playbackTempo = ref(180);
 
 const { addTrack } = useMIDIStore();
 const { currentTrack, updateCurrentTrack } = useTrackState();
 const { sampler, samplerError, samplerLoaded } = usePianoSampler();
-const { isPlaying, transportError, togglePlayPause, initialiseTransport, handleStop } =
-	useTransport({ playbackTempo: playbackTempo.value, 
-    onStop: async () => {
-      console.log("Adding track: ", currentTrack.value.track)
-      await addTrack(currentTrack.value.track);
-    }
-   });
-const { pressedKeys, handleCellToggled, handleGridUpdated, handleGridIsClear } =
+const {
+	isPlaying,
+	transportError,
+	togglePlayPause,
+	initialiseTransport,
+	handleStop,
+} = useTransport({
+	playbackTempo: playbackTempo.value,
+	onStop: async () => {
+		console.log("Adding track: ", currentTrack.value.track);
+		await addTrack(currentTrack.value.track);
+	},
+});
+const { pressedKeys, handleCellToggled, handleGridUpdated, handleGridIsClear, handleClearGrid } =
 	useTrackControl({
 		sampler,
-		onStop: () => {
-			isPlaying.value = false;
-			Tone.getTransport().stop();
-			updateCurrentTrack({
-				id: crypto.randomUUID(),
-				track: new Track([], new Header()),
-			});
+		onStop: async () => {
+			console.log("Adding track: ", currentTrack.value.track);
+			await addTrack(currentTrack.value.track);
 		},
 	});
 
@@ -68,6 +70,7 @@ onMounted(() => {
           :is-playing="isPlaying"
           @toggle-play-pause="togglePlayPause"
           @end-track="handleStop"
+          @clear-grid="handleClearGrid"
         />
       </div>
     </div>

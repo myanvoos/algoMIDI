@@ -2,16 +2,9 @@
     <div class="flex items-center justify-between w-full border border-dashed border-gray-500 p-3">
         <div class="flex items-center gap-2">
             <Button 
-                v-if="!trackIsPlaying"
-                icon="pi pi-play" 
+                :icon="trackIsPlaying ? 'pi pi-pause' : 'pi pi-play'" 
                 rounded
-                @click="handlePlayTrack"
-            />
-            <Button 
-                v-if="trackIsPlaying"
-                icon="pi pi-pause" 
-                rounded
-                @click="handlePauseTrack"
+                @click="handleTogglePlayTrack"
             />
 
             <input
@@ -46,18 +39,26 @@ const props = defineProps<{
 const { transportError, handleStop } = useTransport({
 	onStop: () => {
 		trackIsPlaying.value = false;
-	}
+	},
 });
 const { sampler, samplerLoaded, samplerError } = usePianoSampler();
 
 const trackIsPlaying = ref(false);
 const trackId = ref<number | null>(null);
 
+const handleTogglePlayTrack = async () => {
+	if (trackIsPlaying.value) {
+		handlePauseTrack();
+	} else {
+		handlePlayTrack();
+	}
+};
+
 const handlePlayTrack = async () => {
 	if (trackId.value) {
 		Tone.getTransport().clear(trackId.value);
 	}
-	
+
 	trackIsPlaying.value = true;
 	const transport = Tone.getTransport();
 	transport.stop();
@@ -77,7 +78,7 @@ const handlePlayTrack = async () => {
 	// schedule all notes, store the ID
 	Object.entries(notesByTicks).forEach(([ticks, notes]) => {
 		const startTime = `+${Tone.Ticks(Number.parseInt(ticks)).toBarsBeatsSixteenths()}`;
-		
+
 		trackId.value = transport.schedule((time) => {
 			notes.forEach((note) => {
 				if (note.velocity > 0) {
@@ -89,10 +90,13 @@ const handlePlayTrack = async () => {
 
 	const lastTick = Math.max(...Object.keys(notesByTicks).map(Number));
 	const duration = Tone.Ticks(lastTick).toSeconds();
-	
-	transport.schedule(() => {
-		handlePauseTrack();
-	}, `+${duration + 0.1}`);
+
+	transport.schedule(
+		() => {
+			handlePauseTrack();
+		},
+		`+${duration + 0.1}`,
+	);
 
 	await Tone.start();
 	transport.start();
@@ -117,5 +121,4 @@ onUnmounted(() => {
 		Tone.getTransport().clear(trackId.value);
 	}
 });
-
 </script>

@@ -21,7 +21,7 @@ export const useMIDIStore = defineStore("midi", {
 				throw error;
 			} finally {
 				this.loading = false;
-				console.log("DB state: ", this.tracks)
+				console.log("DB state: ", this.tracks);
 			}
 		},
 
@@ -50,7 +50,7 @@ export const useMIDIStore = defineStore("midi", {
 				throw error;
 			} finally {
 				this.loading = false;
-			}	
+			}
 		},
 
 		async deleteTrack(id: string) {
@@ -79,6 +79,6 @@ export const useMIDIStore = defineStore("midi", {
 			} finally {
 				this.loading = false;
 			}
-		}
+		},
 	},
 });

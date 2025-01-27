@@ -10,6 +10,7 @@ export interface P5CanvasConfig {
 }
 
 interface RenderCallbacks {
+	onSetup?: (p5: p5) => void;
 	onDraw?: (p5: p5) => void;
 	onMouseClicked?: (p5: p5) => void;
 	beforeLoop?: () => void;
@@ -38,6 +39,8 @@ export function useP5Canvas() {
 				p5.frameRate(config.value.frameRate);
 				p5.background(config.value.backgroundColour);
 				p5.noLoop();
+				
+				callbacks.onSetup?.(p5);
 			};
 
 			p5.draw = () => {
@@ -71,11 +74,18 @@ export function useP5Canvas() {
 		}
 	};
 
+	const redraw = () => {
+		if (p5Instance.value) {
+			p5Instance.value.redraw();
+		}
+	};
+
 	onUnmounted(cleanup);
 
 	return {
 		p5Instance,
 		initCanvas,
 		createSketch,
+		redraw,
 	};
 }

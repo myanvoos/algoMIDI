@@ -151,6 +151,15 @@ export const useAutomata = (config: AutomataConfig) => {
 		return activeNotes;
 	};
 
+	const clearGrid = () => {
+		for (let row = 0; row < rowCount.value; row++) {
+			for (let column = 0; column < columnCount.value; column++) {
+				currentCells.value[row][column].isOn = false;
+			}
+		}
+		currentCells.value = deepCloneCells(currentCells.value);
+	}
+
 	const updateAutomata = () => {
 		nextCells.value = deepCloneCells(currentCells.value);
 		clearRightmostFlags(nextCells.value);
@@ -196,6 +205,7 @@ export const useAutomata = (config: AutomataConfig) => {
 		rowCount,
 		columnCount,
 		updateAutomata,
+		clearGrid,
 		countNeighbours, // for testing
 	};
 };

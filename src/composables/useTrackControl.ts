@@ -2,7 +2,7 @@ import { Header, Track } from "@tonejs/midi";
 import { Note } from "@tonejs/midi/dist/Note";
 import * as Tone from "tone";
 import { ref, watch } from "vue";
-import { useTrackState } from './useTrackState';
+import { useTrackState } from "./useTrackState";
 import { useTransport } from "./useTransport";
 
 interface TrackControlConfig {
@@ -15,40 +15,42 @@ export function useTrackControl(config: TrackControlConfig) {
 	const { isPlaying } = useTransport();
 	const pressedKeys = ref<Set<Note>>(new Set());
 
-	watch(pressedKeys, (newPressedKeys) => {
-		if (!isPlaying.value) {
-			console.log("Not playing, returning");
-			return;
-		}
-		
-		const currentTicks = Tone.getTransport().ticks;
-		
-		currentTrack.value.track.notes = currentTrack.value.track.notes.filter(
-			(note) => note.ticks !== currentTicks
-		);
-		
-		const notesToAdd: Note[] = Array.from(newPressedKeys).map(note => {
-			const newNote = new Note(
-				{
-					midi: Tone.Frequency(note.name).toMidi(),
-					velocity: note.velocity,
-					ticks: currentTicks,
-				},
-				{
-					ticks: currentTicks + Tone.Time("4n").toTicks(),
-					velocity: note.velocity * 0.8,
-				},
-				new Header()
-			);
-			newNote.durationTicks = Tone.Time("4n").toTicks();
-			return newNote;
-		});
-		
-		currentTrack.value.track.notes.push(...notesToAdd);
-		currentTrack.value.track.notes.sort((a, b) => a.ticks - b.ticks);
+	watch(
+		pressedKeys,
+		(newPressedKeys) => {
+			if (!isPlaying.value) {
+				console.log("Not playing, returning");
+				return;
+			}
 
-		console.log("Track updated:", currentTrack.value.track);
-	}, { deep: true });
+			const currentTicks = Tone.getTransport().ticks;
+
+			currentTrack.value.track.notes = currentTrack.value.track.notes.filter(
+				(note) => note.ticks !== currentTicks,
+			);
+
+			const notesToAdd: Note[] = Array.from(newPressedKeys).map((note) => {
+				const newNote = new Note(
+					{
+						midi: Tone.Frequency(note.name).toMidi(),
+						velocity: note.velocity,
+						ticks: currentTicks,
+					},
+					{
+						ticks: currentTicks + Tone.Time("4n").toTicks(),
+						velocity: note.velocity * 0.8,
+					},
+					new Header(),
+				);
+				newNote.durationTicks = Tone.Time("4n").toTicks();
+				return newNote;
+			});
+
+			currentTrack.value.track.notes.push(...notesToAdd);
+			currentTrack.value.track.notes.sort((a, b) => a.ticks - b.ticks);
+		},
+		{ deep: true },
+	);
 
 	const handleCellToggled = (payload: { note: Note; isOn: boolean }) => {
 		if (payload.isOn) {
@@ -56,8 +58,15 @@ export function useTrackControl(config: TrackControlConfig) {
 		} else {
 			pressedKeys.value.delete(payload.note);
 		}
+		// reassign to make sure pressedKeys is a new object
 		pressedKeys.value = new Set(pressedKeys.value);
 	};
+
+	const handleClearGrid = () => {
+		console.log("Clearing grid");
+		pressedKeys.value.clear();
+		pressedKeys.value = new Set(pressedKeys.value);
+	}
 
 	const handleGridUpdated = (activeNotes: Set<Note>) => {
 		if (!config.sampler) return;
@@ -79,6 +88,7 @@ export function useTrackControl(config: TrackControlConfig) {
 
 	const handleGridIsClear = async () => {
 		config.onStop();
+		isPlaying.value = false;
 		pressedKeys.value.clear();
 		Tone.getTransport().stop();
 	};
@@ -88,7 +98,7 @@ export function useTrackControl(config: TrackControlConfig) {
 		return {
 			...note,
 			ticks: currentTicks,
-			durationTicks: Tone.Time("4n").toTicks()
+			durationTicks: Tone.Time("4n").toTicks(),
 		};
 	};
 
@@ -98,7 +108,7 @@ export function useTrackControl(config: TrackControlConfig) {
 			note.name,
 			"4n",
 			undefined,
-			note.velocity
+			note.velocity,
 		);
 	};
 
@@ -107,8 +117,9 @@ export function useTrackControl(config: TrackControlConfig) {
 		handleCellToggled,
 		handleGridUpdated,
 		handleGridIsClear,
+		handleClearGrid,
 		recordNote,
 		playNote,
-		updatePressedKeys: (keys: Set<Note>) => pressedKeys.value = keys
+		updatePressedKeys: (keys: Set<Note>) => (pressedKeys.value = keys),
 	};
 }

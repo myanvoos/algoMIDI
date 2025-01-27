@@ -41,12 +41,12 @@ export function useTransport(config: TransportConfig = {}) {
 		Tone.getTransport().cancel();
 	};
 
-    const handleStop = () => {
-        console.log("Handling stop");
-        config.onStop?.();
-        Tone.getTransport().stop();
-        isPlaying.value = false;
-    }
+	const handleStop = () => {
+		console.log("Handling stop");
+		config.onStop?.();
+		Tone.getTransport().stop();
+		isPlaying.value = false;
+	};
 
 	onUnmounted(cleanup);
 
@@ -55,6 +55,6 @@ export function useTransport(config: TransportConfig = {}) {
 		transportError,
 		togglePlayPause,
 		initialiseTransport,
-        handleStop,
+		handleStop,
 	};
 }
