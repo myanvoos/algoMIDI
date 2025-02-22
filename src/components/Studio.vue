@@ -41,6 +41,11 @@ const { pressedKeys, handleCellToggled, handleGridUpdated, handleGridIsClear, ha
 onMounted(() => {
 	initialiseTransport();
 });
+
+const updatePlaybackTempo = (tempo: number) => {
+  console.log("Updating playback tempo: ", tempo)
+  playbackTempo.value = tempo
+}
 </script>
 
 <template>
@@ -59,6 +64,7 @@ onMounted(() => {
             @cellToggled="handleCellToggled"
             @gridUpdated="handleGridUpdated"
             @gridIsClear="handleGridIsClear"
+            @update:playbackTempo="updatePlaybackTempo"
             :is-playing="isPlaying"
             :playback-tempo="playbackTempo"
           />
