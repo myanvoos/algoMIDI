@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import cytoscape from 'cytoscape';
+import cytoscape, { EdgeSingular, NodeSingular } from 'cytoscape';
 import { ref, onMounted } from 'vue';
 
-const cy = ref<any>(null);
+/**
+ * Using the reference: https://github.com/cytoscape/cytoscape.js/blob/master/documentation/demos/animated-bfs/code.js
+ */
+const cy = ref<cytoscape.Core | null>(null);
 
 onMounted(() => {
   cy.value = cytoscape({
@@ -18,7 +21,7 @@ onMounted(() => {
                 'label': 'data(id)',
                 'color': '#213547',
                 'background-color': '#fff',
-                'font-size': 14,
+                'font-size': 16,
                 'font-weight': 'bold',
                 'text-valign': 'center',
                 'text-halign': 'center'
@@ -32,8 +35,34 @@ onMounted(() => {
                 'line-color': '#fff',
                 'target-arrow-color': '#fff',
                 'line-opacity': 1,
+                'label': 'data(weight)',
+                'color': '#fff',
+                'font-size': 20,
+                'font-weight': 'bold',
+                'text-rotation': 'autorotate',
+                'text-margin-y': -20,
             }
         },
+        {
+            selector: 'node.visited',
+            style: {
+                'background-color': '#61bffc',
+                'line-color': '#61bffc',
+                'target-arrow-color': '#61bffc',
+                'transition-property': 'background-color, line-color, target-arrow-color',
+                'transition-duration': 0.5
+            }
+        },
+        {
+            selector: 'edge.visited',
+            style: {
+                'line-color': '#61bffc',
+                'color': '#61bffc',
+                'target-arrow-color': '#61bffc',
+                'transition-property': 'line-color, target-arrow-color',
+                'transition-duration': 0.5
+            }
+        }
     ],
     elements: {
       nodes: [
@@ -56,7 +85,7 @@ onMounted(() => {
     },
 
     layout: {
-      name: 'grid',
+      name: 'circle',
       padding: 10
     },
 
@@ -64,6 +93,23 @@ onMounted(() => {
     userZoomingEnabled: false,
   });
 
+  const bfs = cy.value.elements().bfs({
+    roots: '#A',
+    visit: function(){}, // leave visit empty because we're using highlightNextEle instead - see example 
+    directed: true
+  });
+
+  let i = 0;
+  const highlightNextEle = () =>{
+    if( i < bfs.path.length ){
+      bfs.path[i].addClass('visited');
+    i++;
+    setTimeout(highlightNextEle, 500);
+  }
+};
+
+// kick off
+highlightNextEle();
 });
 </script>
 
