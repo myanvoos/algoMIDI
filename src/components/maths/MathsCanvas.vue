@@ -91,7 +91,7 @@ const gridIsClear = () => {
 }
 
 .settings-wrapper {
-  @apply absolute left-0 top-0 z-10;
+  @apply z-10;
 }
 
 .canvas-wrapper {
