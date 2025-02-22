@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import cytoscape, { EdgeSingular, NodeSingular } from 'cytoscape';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 
 /**
  * Using the reference: https://github.com/cytoscape/cytoscape.js/blob/master/documentation/demos/animated-bfs/code.js
  */
 const cy = ref<cytoscape.Core | null>(null);
+
+const props = defineProps<{
+  graphAnimating: boolean
+}>()
 
 onMounted(() => {
   cy.value = cytoscape({
@@ -101,7 +105,7 @@ onMounted(() => {
 
   let i = 0;
   const highlightNextEle = () =>{
-    if( i < bfs.path.length ){
+    if (props.graphAnimating && i < bfs.path.length) {
       bfs.path[i].addClass('visited');
     i++;
     setTimeout(highlightNextEle, 500);
@@ -109,7 +113,7 @@ onMounted(() => {
 };
 
 // kick off
-highlightNextEle();
+watch(() => props.graphAnimating, () => highlightNextEle())
 });
 </script>
 

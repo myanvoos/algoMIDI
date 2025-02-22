@@ -32,7 +32,10 @@
           />
         </div>
         <div class="flex-1 border">
-          <Graph />
+          <Graph 
+            :graph-animating="isPlaying"
+          />
+
         </div>
       </div>
     </div>
@@ -48,6 +51,7 @@ import CellularAutomata from "./CellularAutomata.vue";
 import Graph from "./Graph.vue";
 
 const settingsOpen = ref(false);
+const graphAnimating = ref(false);
 const cellularAutomataRules = ref("B3/S2,3");
 
 const props = defineProps<{
@@ -109,4 +113,5 @@ const gridIsClear = () => {
 .toolbar {
   @apply w-full mb-4;
 }
+
 </style>
