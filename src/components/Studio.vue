@@ -52,18 +52,17 @@ onMounted(() => {
       Loading sound samples...
     </div>
     <div class="studio-layout">
-      <div class="track-view-container">
-        <TrackView />
-      </div>
       <div class="piano-section">
-        <MathsCanvas
-          :pressed-keys="pressedKeys"
-          @cellToggled="handleCellToggled"
-          @gridUpdated="handleGridUpdated"
-          @gridIsClear="handleGridIsClear"
-          :is-playing="isPlaying"
-          :playback-tempo="playbackTempo"
-        />
+        <div class="canvas-container">
+          <MathsCanvas
+            :pressed-keys="pressedKeys"
+            @cellToggled="handleCellToggled"
+            @gridUpdated="handleGridUpdated"
+            @gridIsClear="handleGridIsClear"
+            :is-playing="isPlaying"
+            :playback-tempo="playbackTempo"
+          />
+        </div>
         <Piano
           :track="currentTrack"
           :pressed-keys="pressedKeys"
@@ -79,19 +78,19 @@ onMounted(() => {
 
 <style scoped>
 .studio-container {
-  @apply min-w-[1200px] flex flex-col w-full h-full;
+  @apply w-full h-full flex flex-col items-center justify-center;
 }
 
 .studio-layout {
-  @apply flex w-full h-full gap-3;
-}
-
-.track-view-container {
-  @apply w-1/3 min-w-[400px] h-full;
+  @apply flex flex-col w-full h-[90vh] items-center justify-center;
 }
 
 .piano-section {
-  @apply flex-1 flex flex-col items-center justify-center;
+  @apply w-full h-full flex flex-col items-center justify-center gap-4;
+}
+
+.canvas-container {
+  @apply flex-1 w-full flex items-center justify-center;
 }
 
 .error-banner {

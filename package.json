@@ -12,6 +12,7 @@
 	"dependencies": {
 		"@primevue/themes": "^4.2.5",
 		"@tonejs/midi": "^2.0.28",
+		"cytoscape": "^3.31.0",
 		"idb": "^8.0.1",
 		"jest-environment-jsdom": "^29.7.0",
 		"midi-writer-js": "^3.1.1",
@@ -51,9 +52,18 @@
 			"^.+\\.ts$": "ts-jest",
 			"^.+\\.js$": "babel-jest"
 		},
-		"moduleFileExtensions": ["ts", "js", "vue", "json"],
-		"transformIgnorePatterns": ["/node_modules/"],
-		"setupFilesAfterEnv": ["@testing-library/jest-dom"],
+		"moduleFileExtensions": [
+			"ts",
+			"js",
+			"vue",
+			"json"
+		],
+		"transformIgnorePatterns": [
+			"/node_modules/"
+		],
+		"setupFilesAfterEnv": [
+			"@testing-library/jest-dom"
+		],
 		"moduleNameMapper": {
 			"^@/(.*)$": "<rootDir>/src/$1"
 		}

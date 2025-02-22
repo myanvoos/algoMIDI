@@ -1,6 +1,6 @@
 <template>
-  <div class="min-w-[1200px] flex items-center justify-center">
-    <div>
+  <div class="maths-canvas-container">
+    <div class="settings-wrapper">
       <CASettings 
         v-if="settingsOpen" 
         :cellular-automata-rules="cellularAutomataRules"
@@ -9,27 +9,33 @@
         @update:playback-tempo="updatePlaybackTempo"
       />
     </div>
-    <div>
-      <Toolbar>
-        <template #start>
-          <Button label="Settings" icon-class="mr-1" icon="pi pi-sliders-h" @click="settingsOpen = !settingsOpen" />
-          <p class="ml-2">({{ cellularAutomataRules }})</p>
-        </template>
-        <template #end>
-          <Button label="Layout" icon-class="mr-1" icon="pi pi-th-large"  />
-        </template>
-      </Toolbar>
-    <CellularAutomata
-        :pressed-keys="pressedKeys"
-        :playback-tempo="playbackTempo"
-        :cellular-automata-rules="cellularAutomataRules"
-        @cellToggled="cellToggled"
-        @gridUpdated="gridUpdated"
-        @gridIsClear="gridIsClear"
-        :is-playing="isPlaying"
-    />
+    <div class="canvas-wrapper">
+      <div class="canvas-content">
+        <div class="cellular-automata-section">
+          <Toolbar class="toolbar">
+            <template #start>
+              <Button label="Settings" icon-class="mr-1" icon="pi pi-sliders-h" @click="settingsOpen = !settingsOpen" />
+              <p class="ml-2">({{ cellularAutomataRules }})</p>
+            </template>
+            <template #end>
+              <Button label="Layout" icon-class="mr-1" icon="pi pi-th-large"  />
+            </template>
+          </Toolbar>
+          <CellularAutomata
+            :pressed-keys="pressedKeys"
+            :playback-tempo="playbackTempo"
+            :cellular-automata-rules="cellularAutomataRules"
+            @cellToggled="cellToggled"
+            @gridUpdated="gridUpdated"
+            @gridIsClear="gridIsClear"
+            :is-playing="isPlaying"
+          />
+        </div>
+        <div class="flex-1 border">
+          <Graph />
+        </div>
+      </div>
     </div>
-    
   </div>
 </template>
 
@@ -39,6 +45,7 @@ import { Button, Toolbar } from "primevue";
 import { ref } from "vue";
 import CASettings from "./CASettings.vue";
 import CellularAutomata from "./CellularAutomata.vue";
+import Graph from "./Graph.vue";
 
 const settingsOpen = ref(false);
 const cellularAutomataRules = ref("B3/S2,3");
@@ -75,10 +82,31 @@ const gridUpdated = (activeNotes: Set<Note>) => {
 const gridIsClear = () => {
 	emit("gridIsClear");
 };
-// TODO: Add chess and Collatz view
 </script>
 
 
 <style scoped>
+.maths-canvas-container {
+  @apply w-[70vw] h-[50vh] flex items-center justify-center;
+}
 
+.settings-wrapper {
+  @apply absolute left-0 top-0 z-10;
+}
+
+.canvas-wrapper {
+  @apply w-full h-full flex flex-col;
+}
+
+.canvas-content {
+  @apply flex w-full h-full gap-8;
+}
+
+.cellular-automata-section {
+  @apply flex flex-col w-[520px] flex-shrink-0 items-center justify-center;
+}
+
+.toolbar {
+  @apply w-full mb-4;
+}
 </style>
