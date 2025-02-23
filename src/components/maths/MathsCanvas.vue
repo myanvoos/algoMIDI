@@ -43,48 +43,48 @@
 </template>
 
 <script setup lang="ts">
-import { Note } from "@tonejs/midi/dist/Note";
-import { Button, Toolbar } from "primevue";
-import { ref } from "vue";
-import CASettings from "./CASettings.vue";
-import CellularAutomata from "./CellularAutomata.vue";
-import Graph from "./Graph.vue";
+import { Note } from "@tonejs/midi/dist/Note"
+import { Button, Toolbar } from "primevue"
+import { ref } from "vue"
+import CASettings from "./CASettings.vue"
+import CellularAutomata from "./CellularAutomata.vue"
+import Graph from "./Graph.vue"
 
-const settingsOpen = ref(false);
-const cellularAutomataRules = ref("B3/S2,3");
+const settingsOpen = ref(false)
+const cellularAutomataRules = ref("B3/S2,3")
 
 const props = defineProps<{
-	pressedKeys: Set<Note>;
-	isPlaying: boolean;
-	playbackTempo: number;
-}>();
+	pressedKeys: Set<Note>
+	isPlaying: boolean
+	playbackTempo: number
+}>()
 
 const emit = defineEmits<{
-	(e: "cellToggled", payload: { note: Note; isOn: boolean }): void;
-	(e: "gridUpdated", activeNotes: Set<Note>): void;
-	(e: "gridIsClear"): void;
-	(e: "update:playbackTempo", value: number): void;
-}>();
+	(e: "cellToggled", payload: { note: Note; isOn: boolean }): void
+	(e: "gridUpdated", activeNotes: Set<Note>): void
+	(e: "gridIsClear"): void
+	(e: "update:playbackTempo", value: number): void
+}>()
 
 const updateCellularAutomataRules = (value: string) => {
-	cellularAutomataRules.value = value;
-};
+	cellularAutomataRules.value = value
+}
 
 const updatePlaybackTempo = (value: number) => {
-	emit("update:playbackTempo", value);
-};
+	emit("update:playbackTempo", value)
+}
 
 const cellToggled = (payload: { note: Note; isOn: boolean }) => {
-	emit("cellToggled", payload);
-};
+	emit("cellToggled", payload)
+}
 
 const gridUpdated = (activeNotes: Set<Note>) => {
-	emit("gridUpdated", activeNotes);
-};
+	emit("gridUpdated", activeNotes)
+}
 
 const gridIsClear = () => {
-	emit("gridIsClear");
-};
+	emit("gridIsClear")
+}
 </script>
 
 

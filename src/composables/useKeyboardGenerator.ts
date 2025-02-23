@@ -1,7 +1,7 @@
-import { Header } from "@tonejs/midi";
-import { Note } from "@tonejs/midi/dist/Note";
-import * as Tone from "tone";
-import { ref } from "vue";
+import { Header } from "@tonejs/midi"
+import { Note } from "@tonejs/midi/dist/Note"
+import * as Tone from "tone"
+import { ref } from "vue"
 
 export const baseNotes = [
 	"C",
@@ -16,12 +16,12 @@ export const baseNotes = [
 	"A",
 	"A#",
 	"B",
-];
+]
 
 export const generateFullKeyboard = (): Note[] => {
-	const keys: Note[] = [];
-	const startOctave = 0;
-	const endOctave = 8;
+	const keys: Note[] = []
+	const startOctave = 0
+	const endOctave = 8
 
 	for (let octave = startOctave; octave <= endOctave; octave++) {
 		baseNotes.forEach((noteName) => {
@@ -30,15 +30,15 @@ export const generateFullKeyboard = (): Note[] => {
 				octave === 0 &&
 				["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"].includes(noteName)
 			) {
-				return;
+				return
 			}
 
 			// Only include C8 (last note on a piano)
 			if (octave === endOctave && noteName !== "C") {
-				return;
+				return
 			}
 
-			const noteId = `${noteName}${octave}`;
+			const noteId = `${noteName}${octave}`
 
 			const note = new Note(
 				{
@@ -51,24 +51,24 @@ export const generateFullKeyboard = (): Note[] => {
 					velocity: 0.5,
 				},
 				new Header(),
-			);
+			)
 
-			keys.push(note);
-		});
+			keys.push(note)
+		})
 	}
 
-	return keys;
-};
+	return keys
+}
 
 export function useKeyboardGenerator() {
-	const keyboard = ref(generateFullKeyboard());
+	const keyboard = ref(generateFullKeyboard())
 
 	const regenerateKeyboard = () => {
-		keyboard.value = generateFullKeyboard();
-	};
+		keyboard.value = generateFullKeyboard()
+	}
 
 	return {
 		keyboard,
 		regenerateKeyboard,
-	};
+	}
 }

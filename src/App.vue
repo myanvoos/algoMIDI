@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Studio from "./components/Studio.vue";
+import Studio from "./components/Studio.vue"
 </script>
 
 <template>

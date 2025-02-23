@@ -7,7 +7,19 @@
 	},
 	"files": {
 		"ignoreUnknown": false,
-		"ignore": []
+		"ignore": [
+			"node_modules",
+			"dist",
+			"build",
+			"public",
+			"src/assets",
+			"babel.config.js",
+			"package.json",
+			"tsconfig.json",
+			"vite.config.js",
+			"vue.config.js",
+			"biome.json"
+		]
 	},
 	"formatter": {
 		"enabled": true,
@@ -20,7 +32,16 @@
 	"linter": {
 		"enabled": true,
 		"rules": {
-			"recommended": true
+			"recommended": true,
+			"style": {
+				"noNonNullAssertion": "info"
+			},
+			"suspicious": {
+				"noExplicitAny": "info"
+			},
+			"complexity": {
+				"noForEach": "info"
+			}
 		}
 	},
 	"javascript": {
@@ -35,7 +56,7 @@
 			"linter": {
 				"rules": {
 					"style": {
-						"useConst": "off",
+						"useConst": "info",
 						"useImportType": "off"
 					}
 				}

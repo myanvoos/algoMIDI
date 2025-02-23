@@ -1,21 +1,21 @@
 <script setup lang="ts">
-import { Header, Track } from "@tonejs/midi";
-import * as Tone from "tone";
-import { computed, onMounted, ref, watch } from "vue";
-import { usePianoSampler } from "../composables/usePianoSampler";
-import { useTrackControl } from "../composables/useTrackControl";
-import { useTrackState } from "../composables/useTrackState";
-import { useTransport } from "../composables/useTransport";
-import { useMIDIStore } from "../stores/midiStore";
-import MathsCanvas from "./maths/MathsCanvas.vue";
-import Piano from "./piano/Piano.vue";
-import TrackView from "./tracks/TrackView.vue";
+import { Header, Track } from "@tonejs/midi"
+import * as Tone from "tone"
+import { computed, onMounted, ref, watch } from "vue"
+import { usePianoSampler } from "../composables/usePianoSampler"
+import { useTrackControl } from "../composables/useTrackControl"
+import { useTrackState } from "../composables/useTrackState"
+import { useTransport } from "../composables/useTransport"
+import { useMIDIStore } from "../stores/midiStore"
+import MathsCanvas from "./maths/MathsCanvas.vue"
+import Piano from "./piano/Piano.vue"
+import TrackView from "./tracks/TrackView.vue"
 
-const playbackTempo = ref(180);
+const playbackTempo = ref(180)
 
-const { addTrack } = useMIDIStore();
-const { currentTrack, updateCurrentTrack } = useTrackState();
-const { sampler, samplerError, samplerLoaded } = usePianoSampler();
+const { addTrack } = useMIDIStore()
+const { currentTrack, updateCurrentTrack } = useTrackState()
+const { sampler, samplerError, samplerLoaded } = usePianoSampler()
 const {
 	isPlaying,
 	transportError,
@@ -25,26 +25,31 @@ const {
 } = useTransport({
 	playbackTempo: playbackTempo.value,
 	onStop: async () => {
-		console.log("Adding track: ", currentTrack.value.track);
-		await addTrack(currentTrack.value.track);
+		console.log("Adding track: ", currentTrack.value.track)
+		await addTrack(currentTrack.value.track)
 	},
-});
-const { pressedKeys, handleCellToggled, handleGridUpdated, handleGridIsClear, handleClearGrid } =
-	useTrackControl({
-		sampler,
-		onStop: async () => {
-			console.log("Adding track: ", currentTrack.value.track);
-			await addTrack(currentTrack.value.track);
-		},
-	});
+})
+const {
+	pressedKeys,
+	handleCellToggled,
+	handleGridUpdated,
+	handleGridIsClear,
+	handleClearGrid,
+} = useTrackControl({
+	sampler,
+	onStop: async () => {
+		console.log("Adding track: ", currentTrack.value.track)
+		await addTrack(currentTrack.value.track)
+	},
+})
 
 onMounted(() => {
-	initialiseTransport();
-});
+	initialiseTransport()
+})
 
 const updatePlaybackTempo = (tempo: number) => {
-  console.log("Updating playback tempo: ", tempo)
-  playbackTempo.value = tempo
+	console.log("Updating playback tempo: ", tempo)
+	playbackTempo.value = tempo
 }
 </script>
 

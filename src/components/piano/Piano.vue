@@ -1,31 +1,31 @@
 <script setup lang="ts">
-import { Note } from "@tonejs/midi/dist/Note";
-import { Button } from "primevue";
-import { useTrackState } from "../../composables/useTrackState";
-import { TrackData } from "../../services/db/types";
-import PianoKeys from "./PianoKeys.vue";
+import { Note } from "@tonejs/midi/dist/Note"
+import { Button } from "primevue"
+import { useTrackState } from "../../composables/useTrackState"
+import { TrackData } from "../../services/db/types"
+import PianoKeys from "./PianoKeys.vue"
 
 const props = defineProps<{
-	pressedKeys: Set<Note>;
-	isPlaying: boolean;
-	track: TrackData | null;
-}>();
+	pressedKeys: Set<Note>
+	isPlaying: boolean
+	track: TrackData | null
+}>()
 
-const { currentTrack } = useTrackState();
+const { currentTrack } = useTrackState()
 
 const endTrack = () => {
-	emit("endTrack", currentTrack.value);
-};
+	emit("endTrack", currentTrack.value)
+}
 
 const clearGrid = () => {
-	emit("clearGrid");
-};
+	emit("clearGrid")
+}
 
 const emit = defineEmits<{
-	(e: "togglePlayPause"): void;
-	(e: "endTrack", track: TrackData | null): void;
-	(e: "clearGrid"): void;
-}>();
+	(e: "togglePlayPause"): void
+	(e: "endTrack", track: TrackData | null): void
+	(e: "clearGrid"): void
+}>()
 </script>
 
 <template>

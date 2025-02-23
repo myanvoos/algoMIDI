@@ -1,61 +1,61 @@
 <script setup lang="ts">
-import { Note } from "@tonejs/midi/dist/Note";
-import { computed } from "vue";
-import { generateFullKeyboard } from "../../composables/useKeyboardGenerator";
+import { Note } from "@tonejs/midi/dist/Note"
+import { computed } from "vue"
+import { generateFullKeyboard } from "../../composables/useKeyboardGenerator"
 
 const props = defineProps<{
-	pressedKeys: Set<Note>;
-}>();
+	pressedKeys: Set<Note>
+}>()
 
-const fullKeyboard = generateFullKeyboard();
+const fullKeyboard = generateFullKeyboard()
 const whiteKeys = computed(() =>
 	fullKeyboard.filter((note) => !note.name.includes("#")),
-);
+)
 const blackKeys = computed(() =>
 	fullKeyboard.filter((note) => note.name.includes("#")),
-);
+)
 
 const isNotePressed = (note: Note): boolean => {
 	return Array.from(props.pressedKeys).some(
 		(pressedNote) => pressedNote.name === note.name,
-	);
-};
+	)
+}
 
 const getPressedNote = (note: Note): Note | undefined => {
 	return Array.from(props.pressedKeys).find(
 		(pressedNote) => pressedNote.name === note.name,
-	);
-};
+	)
+}
 
 const getBlackKeyPosition = (index: number): number => {
-	const blackKeyPattern = ["C#", "D#", "F#", "G#", "A#"];
+	const blackKeyPattern = ["C#", "D#", "F#", "G#", "A#"]
 
-	const totalWhiteKeys = whiteKeys.value.length;
-	const whiteKeyWidth = 100 / totalWhiteKeys; // This is percentage width
+	const totalWhiteKeys = whiteKeys.value.length
+	const whiteKeyWidth = 100 / totalWhiteKeys // This is percentage width
 
-	let blackKeyCount = 0;
-	let position = 0;
+	let blackKeyCount = 0
+	let position = 0
 
 	for (let i = 0; i < whiteKeys.value.length; i++) {
-		position = i * whiteKeyWidth;
-		const currentWhite = whiteKeys.value[i].name.slice(0, -1); // Remove octave number
+		position = i * whiteKeyWidth
+		const currentWhite = whiteKeys.value[i].name.slice(0, -1) // Remove octave number
 
 		if (blackKeyPattern.includes(`${currentWhite}#`)) {
 			if (blackKeyCount === index) {
-				return position + whiteKeyWidth * 0.7;
+				return position + whiteKeyWidth * 0.7
 			}
-			blackKeyCount++;
+			blackKeyCount++
 		}
 	}
 
-	return 0;
-};
+	return 0
+}
 
 const getKeyOpacity = (note: Note): number => {
-	const pressedNote = getPressedNote(note);
-	const velocity = pressedNote?.velocity ?? note.velocity;
-	return velocity * 0.8 + 0.2;
-};
+	const pressedNote = getPressedNote(note)
+	const velocity = pressedNote?.velocity ?? note.velocity
+	return velocity * 0.8 + 0.2
+}
 </script>
 
 <template>

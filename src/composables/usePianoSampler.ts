@@ -1,11 +1,11 @@
-import * as Tone from "tone";
-import type { Sampler } from "tone";
-import { onUnmounted, ref } from "vue";
+import * as Tone from "tone"
+import type { Sampler } from "tone"
+import { onUnmounted, ref } from "vue"
 
 interface SamplerConfig {
-	urls: Record<string, string>;
-	release: number;
-	baseUrl: string;
+	urls: Record<string, string>
+	release: number
+	baseUrl: string
 }
 
 const DEFAULT_SAMPLER_CONFIG: SamplerConfig = {
@@ -16,46 +16,46 @@ const DEFAULT_SAMPLER_CONFIG: SamplerConfig = {
 	},
 	release: 1,
 	baseUrl: "/samples/piano/", // Using base grand piano sampler for now
-};
+}
 
 // global singleton instance
-let globalSampler: Sampler | null = null;
+let globalSampler: Sampler | null = null
 
 export function usePianoSampler(
 	config: SamplerConfig = DEFAULT_SAMPLER_CONFIG,
 ) {
-	const samplerLoaded = ref(false);
-	const samplerError = ref<Error | null>(null);
+	const samplerLoaded = ref(false)
+	const samplerError = ref<Error | null>(null)
 
 	// Only create a new sampler if one doesn't exist
 	if (!globalSampler) {
 		globalSampler = new Tone.Sampler({
 			...config,
 			onload: () => {
-				console.log("Sampler loaded successfully");
-				samplerLoaded.value = true;
+				console.log("Sampler loaded successfully")
+				samplerLoaded.value = true
 			},
 			onerror: (err) => {
-				console.error("Error loading sampler:", err);
-				samplerError.value = err;
+				console.error("Error loading sampler:", err)
+				samplerError.value = err
 			},
 			attack: 0,
 			curve: "exponential",
-		}).toDestination();
+		}).toDestination()
 	}
 
 	const cleanup = () => {
 		if (globalSampler) {
-			globalSampler.dispose();
-			globalSampler = null;
+			globalSampler.dispose()
+			globalSampler = null
 		}
-	};
+	}
 
-	onUnmounted(cleanup);
+	onUnmounted(cleanup)
 
 	return {
 		sampler: globalSampler,
 		samplerLoaded,
 		samplerError,
-	};
+	}
 }
