@@ -185,7 +185,7 @@ export const useAutomata = (config: AutomataConfig) => {
 				if (!cellIsOn && newCellState) {
 					if (
 						!rightmostNewAliveNotes.has(row) ||
-						column > rightmostNewAliveNotes.get(row)?.column
+						column > rightmostNewAliveNotes.get(row)!.column
 					) {
 						rightmostNewAliveNotes.set(row, {
 							column,
