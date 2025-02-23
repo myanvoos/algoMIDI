@@ -1,12 +1,43 @@
+<template>
+  <Toolbar class="toolbar">
+    <template #end>
+      <select
+            :value="selectedSearch.name"
+            @change="(e) => updateSearchStrategy((e.target as HTMLSelectElement).value)"
+            class="w-full p-2 rounded-md bg-transparent text-white"
+          >
+            <option v-for="strat in searchStrategies">{{ strat.name }}</option>
+          </select>
+    </template>
+  </Toolbar>
+  <div id="cy" class="border"></div>
+</template>
+
 <script setup lang="ts">
 import cytoscape, { EdgeSingular, NodeSingular } from 'cytoscape';
+import { Toolbar, Button, Select } from 'primevue';
 import { ref, onMounted, watch } from 'vue';
 
 /**
  * Using the reference: https://github.com/cytoscape/cytoscape.js/blob/master/documentation/demos/animated-bfs/code.js
  */
 const cy = ref<cytoscape.Core | null>(null);
+const searchStrategies = [
+  {
+    name: "Breath-First Search (BFS)", shorthand: "bfs",
+  },
+  {
+    name: "Depth-First Search (DFS)", shorthand: "dfs",
+  },
+  // {
+  //   name: "A* Search", shorthand: "aStar"
+  // }
+]
+const selectedSearch = ref(searchStrategies[0])
 
+const updateSearchStrategy = (value: string) => {
+  
+}
 const props = defineProps<{
   graphAnimating: boolean
 }>()
@@ -80,7 +111,7 @@ onMounted(() => {
       edges: [
         { data: { id: 'A-E', weight: 1, source: 'A', target: 'E' } },
         { data: { id: 'A-B', weight: 3, source: 'A', target: 'B' } },
-        { data: { id: 'B-E', weight: 4, source: 'B', target: 'E' } },
+        { data: { id: 'B-E', weight: 4, source: 'B', target: 'D' } },
         { data: { id: 'B-C', weight: 5, source: 'B', target: 'C' } },
         { data: { id: 'C-E', weight: 6, source: 'C', target: 'E' } },
         { data: { id: 'C-D', weight: 2, source: 'C', target: 'D' } },
@@ -89,7 +120,7 @@ onMounted(() => {
     },
 
     layout: {
-      name: 'circle',
+      name: 'grid',
       padding: 10
     },
 
@@ -97,16 +128,38 @@ onMounted(() => {
     userZoomingEnabled: false,
   });
 
-  const bfs = cy.value.elements().bfs({
-    roots: '#A',
-    visit: function(){}, // leave visit empty because we're using highlightNextEle instead - see example 
-    directed: true
-  });
+  const determineStrategy = (cy: cytoscape.Core) => {
+    switch (selectedSearch.value.shorthand) {
+      case 'dfs':
+        console.log('Performing DFS...')
+        const dfs = cy.elements().dfs({
+          roots: '#A',
+          visit: () => {},
+          directed: true
+        })
+
+        return { strategy: dfs }
+      default:
+        console.error('Not a valid search strategy! Defaulting to BFS...')
+
+        const bfs = cy.elements().bfs({
+          roots: '#A',
+          visit: () => {}, // leave visit empty because we're using highlightNextEle instead - see example 
+          directed: true
+        });
+
+        return { strategy: bfs }
+    }
+  }
+  
+  if (!cy) return
 
   let i = 0;
+  const strategy = determineStrategy(cy.value)?.strategy
   const highlightNextEle = () =>{
-    if (props.graphAnimating && i < bfs.path.length) {
-      bfs.path[i].addClass('visited');
+    if (cy.value && props.graphAnimating && i < strategy.path.length) {
+      console.log(strategy)
+      strategy.path[i].addClass('visited');
     i++;
     setTimeout(highlightNextEle, 500);
   }
@@ -117,13 +170,14 @@ watch(() => props.graphAnimating, () => highlightNextEle())
 });
 </script>
 
-<template>
-  <div id="cy"></div>
-</template>
-
 <style scoped>
 #cy {
   width: 100%;
   height: 620px; 
 }
+
+.search-select {
+  @apply w-full md:w-52 text-end gap-2 mb-3
+}
+
 </style>

@@ -17,9 +17,9 @@
               <Button label="Settings" icon-class="mr-1" icon="pi pi-sliders-h" @click="settingsOpen = !settingsOpen" />
               <p class="ml-2">({{ cellularAutomataRules }})</p>
             </template>
-            <template #end>
+            <!-- <template #end>
               <Button label="Layout" icon-class="mr-1" icon="pi pi-th-large"  />
-            </template>
+            </template> -->
           </Toolbar>
           <CellularAutomata
             :pressed-keys="pressedKeys"
@@ -31,7 +31,7 @@
             :is-playing="isPlaying"
           />
         </div>
-        <div class="flex-1 border">
+        <div class="flex-1">
           <Graph 
             :graph-animating="isPlaying"
           />
@@ -51,7 +51,6 @@ import CellularAutomata from "./CellularAutomata.vue";
 import Graph from "./Graph.vue";
 
 const settingsOpen = ref(false);
-const graphAnimating = ref(false);
 const cellularAutomataRules = ref("B3/S2,3");
 
 const props = defineProps<{

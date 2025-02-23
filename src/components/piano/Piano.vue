@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Track } from "@tonejs/midi";
 import { Note } from "@tonejs/midi/dist/Note";
 import { Button } from "primevue";
 import { useTrackState } from "../../composables/useTrackState";
