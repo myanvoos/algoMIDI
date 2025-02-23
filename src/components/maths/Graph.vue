@@ -1,13 +1,21 @@
 <template>
   <Toolbar class="toolbar">
+    <template #start>
+      <Button 
+        :icon="inDrawMode ? 'pi pi-pencil' : 'pi pi-eye'" 
+        icon-class="mr-1" 
+        :label="inDrawMode ? 'In draw mode' : 'In view mode'" 
+        @click="inDrawMode = !inDrawMode"  
+      />
+    </template>
     <template #end>
       <select
-            :value="selectedSearch.name"
-            @change="(e) => updateSearchStrategy((e.target as HTMLSelectElement).value)"
-            class="w-full p-2 rounded-md bg-transparent text-white"
-          >
-            <option v-for="strat in searchStrategies">{{ strat.name }}</option>
-          </select>
+        :value="selectedSearch.name"
+        @change="(e) => updateSearchStrategy((e.target as HTMLSelectElement).value)"
+        class="w-full p-2 rounded-md bg-transparent text-white"
+      >
+        <option v-for="strat in searchStrategies">{{ strat.name }}</option>
+      </select>
     </template>
   </Toolbar>
   <div id="cy" class="border"></div>
@@ -15,13 +23,16 @@
 
 <script setup lang="ts">
 import cytoscape, { EdgeSingular, NodeSingular } from 'cytoscape';
-import { Toolbar, Button, Select } from 'primevue';
+// @ts-ignore
+import edgehandles from 'cytoscape-edgehandles'
+import { Toolbar } from 'primevue';
 import { ref, onMounted, watch } from 'vue';
-
+import Button from "primevue/button";
 /**
  * Using the reference: https://github.com/cytoscape/cytoscape.js/blob/master/documentation/demos/animated-bfs/code.js
  */
 const cy = ref<cytoscape.Core | null>(null);
+
 const searchStrategies = [
   {
     name: "Breath-First Search (BFS)", shorthand: "bfs",
@@ -34,13 +45,18 @@ const searchStrategies = [
   // }
 ]
 const selectedSearch = ref(searchStrategies[0])
+const inDrawMode = ref(false)
 
 const updateSearchStrategy = (value: string) => {
-  
+  selectedSearch.value = searchStrategies.filter(v => v.name === value)[0]
 }
+
+
 const props = defineProps<{
   graphAnimating: boolean
 }>()
+
+cytoscape.use( edgehandles )
 
 onMounted(() => {
   cy.value = cytoscape({
@@ -97,7 +113,61 @@ onMounted(() => {
                 'transition-property': 'line-color, target-arrow-color',
                 'transition-duration': 0.5
             }
-        }
+        },
+        {
+              selector: '.eh-handle',
+              style: {
+                'background-color': 'lightskyblue',
+                'width': 12,
+                'height': 12,
+                'shape': 'ellipse',
+                'overlay-opacity': 0,
+                'border-width': 12, // makes the handle easier to hit
+                'border-opacity': 0
+              }
+            },
+
+            {
+              selector: '.eh-hover',
+              style: {
+                'background-color': 'lightskyblue'
+              }
+            },
+
+            {
+              selector: '.eh-source',
+              style: {
+                'border-width': 2,
+                'border-color': 'lightskyblue',
+                'background-color': 'lightskyblue'
+              }
+            },
+
+            {
+              selector: '.eh-target',
+              style: {
+                'border-width': 2,
+                'border-color': 'lightskyblue'
+              }
+            },
+
+            {
+              selector: '.eh-preview, .eh-ghost-edge',
+              style: {
+                'background-color': 'lightskyblue',
+                'line-color': 'lightskyblue',
+                'target-arrow-color': 'lightskyblue',
+                'source-arrow-color': 'lightskyblue'
+              }
+            },
+
+            {
+              selector: '.eh-ghost-edge.eh-preview-active',
+              style: {
+                'opacity': 0
+              }
+            }
+
     ],
     elements: {
       nodes: [
@@ -109,13 +179,14 @@ onMounted(() => {
       ],
 
       edges: [
-        { data: { id: 'A-E', weight: 1, source: 'A', target: 'E' } },
-        { data: { id: 'A-B', weight: 3, source: 'A', target: 'B' } },
-        { data: { id: 'B-E', weight: 4, source: 'B', target: 'D' } },
-        { data: { id: 'B-C', weight: 5, source: 'B', target: 'C' } },
-        { data: { id: 'C-E', weight: 6, source: 'C', target: 'E' } },
-        { data: { id: 'C-D', weight: 2, source: 'C', target: 'D' } },
-        { data: { id: 'D-E', weight: 7, source: 'D', target: 'E' } }
+        // TODO: Add weights back in, currently removed for simplicity
+        { data: { id: 'A-E', source: 'A', target: 'E' } },
+        { data: { id: 'A-B', source: 'A', target: 'B' } },
+        { data: { id: 'B-E', source: 'B', target: 'D' } },
+        { data: { id: 'B-C', source: 'B', target: 'C' } },
+        { data: { id: 'C-E', source: 'C', target: 'E' } },
+        { data: { id: 'C-D', source: 'C', target: 'D' } },
+        { data: { id: 'D-E', source: 'D', target: 'E' } }
       ]
     },
 
@@ -126,7 +197,16 @@ onMounted(() => {
 
     zoomingEnabled: false,
     userZoomingEnabled: false,
+    
   });
+
+  // enable the edgehandles extension by default
+  const eh = (cy.value as any).edgehandles({
+    preview: true,
+    handleNodes: "node",
+    handleInDrawMode: true
+  });
+
 
   const determineStrategy = (cy: cytoscape.Core) => {
     switch (selectedSearch.value.shorthand) {
@@ -167,6 +247,10 @@ onMounted(() => {
 
 // kick off
 watch(() => props.graphAnimating, () => highlightNextEle())
+watch(inDrawMode, () => {
+    if (inDrawMode.value) eh.enableDrawMode()
+    else eh.disableDrawMode()
+  })
 });
 </script>
 
@@ -177,7 +261,7 @@ watch(() => props.graphAnimating, () => highlightNextEle())
 }
 
 .search-select {
-  @apply w-full md:w-52 text-end gap-2 mb-3
+  @apply text-end gap-2 mb-3
 }
 
 </style>
