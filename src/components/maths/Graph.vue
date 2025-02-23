@@ -1,6 +1,6 @@
 <template>
   <Toolbar class="toolbar">
-    <template #start>
+    <template #center>
       <Button 
         :icon="inDrawMode ? 'pi pi-pencil' : 'pi pi-eye'" 
         icon-class="mr-1" 
@@ -8,11 +8,22 @@
         @click="inDrawMode = !inDrawMode"  
       />
     </template>
+    <template #start>
+      <span class="pi pi-sitemap mr-1"></span>
+      <span class="text-white">Layout:</span>
+      <select
+        :value="layout"
+        @change="(e) => layout = (e.target as HTMLSelectElement).value"
+        class="p-2 rounded-md bg-transparent text-white"
+      >
+        <option v-for="opt in layoutOptions">{{ opt }}</option>
+      </select>
+    </template>
     <template #end>
       <select
         :value="selectedSearch.name"
         @change="(e) => updateSearchStrategy((e.target as HTMLSelectElement).value)"
-        class="w-full p-2 rounded-md bg-transparent text-white"
+        class="p-2 rounded-md bg-transparent text-white"
       >
         <option v-for="strat in searchStrategies">{{ strat.name }}</option>
       </select>
@@ -49,6 +60,16 @@ const searchStrategies = [
 const selectedSearch = ref(searchStrategies[0])
 const inDrawMode = ref(false)
 const root = ref("#C4")
+
+const layoutOptions = ref([
+	"breadthfirst",
+	"grid",
+	"random",
+	"circle",
+	"concentric",
+	"cose",
+])
+const layout = ref(layoutOptions.value[0])
 
 const updateSearchStrategy = (value: string) => {
 	selectedSearch.value = searchStrategies.filter((v) => v.name === value)[0]
@@ -251,12 +272,11 @@ onMounted(() => {
 		},
 
 		layout: {
-			name: "grid",
-			padding: 10,
+			name: "breadthfirst",
 		},
 
-		zoomingEnabled: false,
-		userZoomingEnabled: false,
+		zoomingEnabled: true,
+		userZoomingEnabled: true,
 	})
 
 	// enable the edgehandles extension by default
@@ -309,6 +329,9 @@ onMounted(() => {
 		() => props.graphAnimating,
 		() => highlightNextEle(),
 	)
+	watch(layout, () => {
+		cy.value?.layout({ name: layout.value }).run()
+	})
 	watch(inDrawMode, () => {
 		if (inDrawMode.value) eh.enableDrawMode()
 		else eh.disableDrawMode()
@@ -340,8 +363,9 @@ onMounted(() => {
   height: 620px; 
 }
 
-.search-select {
-  @apply text-end gap-2 mb-3
+.toolbar {
+  @apply w-full mb-3;
 }
+
 
 </style>
