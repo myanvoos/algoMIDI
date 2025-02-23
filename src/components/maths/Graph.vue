@@ -1,12 +1,7 @@
 <template>
   <Toolbar class="toolbar">
     <template #center>
-      <Button 
-        :icon="inDrawMode ? 'pi pi-pencil' : 'pi pi-eye'" 
-        icon-class="mr-1" 
-        :label="inDrawMode ? 'In draw mode' : 'In view mode'" 
-        @click="inDrawMode = !inDrawMode"  
-      />
+      
     </template>
     <template #start>
       <span class="pi pi-sitemap mr-1"></span>
@@ -18,8 +13,6 @@
       >
         <option v-for="opt in layoutOptions">{{ opt }}</option>
       </select>
-    </template>
-    <template #end>
       <select
         :value="selectedSearch.name"
         @change="(e) => updateSearchStrategy((e.target as HTMLSelectElement).value)"
@@ -28,20 +21,30 @@
         <option v-for="strat in searchStrategies">{{ strat.name }}</option>
       </select>
     </template>
+    <template #end>
+      <Button 
+        :icon="inDrawMode ? 'pi pi-pencil' : 'pi pi-eye'" 
+        icon-class="mr-1" 
+        :label="inDrawMode ? 'In draw mode' : 'In view mode'" 
+        @click="inDrawMode = !inDrawMode"  
+      />
+      <Button :label="loop ? 'On loop' : 'Single play'" icon-class="mr-1" :icon="loop ? 'pi pi-equals' : 'pi pi-minus'" @click="loop = !loop" class="ml-4"/>
+    </template>
   </Toolbar>
   <div id="cy" class="border"></div>
 </template>
 
 <script setup lang="ts">
+import { Header } from "@tonejs/midi"
+import { Note } from "@tonejs/midi/dist/Note"
 import cytoscape from "cytoscape"
 // @ts-ignore
 import edgehandles from "cytoscape-edgehandles"
 import { Toolbar } from "primevue"
 import Button from "primevue/button"
+import * as Tone from "tone"
 import { onMounted, ref, watch } from "vue"
-/**
- * Using the reference: https://github.com/cytoscape/cytoscape.js/blob/master/documentation/demos/animated-bfs/code.js
- */
+
 const cy = ref<cytoscape.Core | null>(null)
 
 const searchStrategies = [
@@ -60,6 +63,7 @@ const searchStrategies = [
 const selectedSearch = ref(searchStrategies[0])
 const inDrawMode = ref(false)
 const root = ref("#C4")
+const loop = ref(false)
 
 const layoutOptions = ref([
 	"breadthfirst",
@@ -77,10 +81,19 @@ const updateSearchStrategy = (value: string) => {
 
 const props = defineProps<{
 	graphAnimating: boolean
+	pressedKeys: Set<Note>
+}>()
+
+const emit = defineEmits<{
+	(e: "cellToggled", payload: { note: Note; isOn: boolean }): void
+	(e: "gridUpdated", activeNotes: Set<Note>): void
 }>()
 
 cytoscape.use(edgehandles)
 
+/**
+ * Using the reference: https://github.com/cytoscape/cytoscape.js/blob/master/documentation/demos/animated-bfs/code.js
+ */
 onMounted(() => {
 	cy.value = cytoscape({
 		container: document.getElementById("cy"),
@@ -318,9 +331,20 @@ onMounted(() => {
 	let strategy = determineStrategy(cy.value)?.strategy
 	const highlightNextEle = () => {
 		if (cy.value && props.graphAnimating && i < strategy.path.length) {
-			strategy.path[i].addClass("visited")
+			const element = strategy.path[i]
+			element.addClass("visited")
+
+			if (element.isNode()) {
+				emit("gridUpdated", new Set([createNoteFromId(element.id())]))
+			}
+
 			i++
-			setTimeout(highlightNextEle, 500)
+			setTimeout(highlightNextEle, 200)
+		} else if (props.graphAnimating && loop.value) {
+			// Reset for next loop
+			i = 0
+			cy.value?.elements().removeClass("visited")
+			setTimeout(highlightNextEle, 200)
 		}
 	}
 
@@ -347,6 +371,12 @@ onMounted(() => {
 		cy.value?.elements().$id(root.value).addClass("visited")
 		node.addClass("visited")
 
+		// Emit selected root note
+		emit("cellToggled", {
+			note: createNoteFromId(node.id()),
+			isOn: true,
+		})
+
 		i = 0
 
 		if (cy.value) {
@@ -354,7 +384,54 @@ onMounted(() => {
 			strategy = newStrategy
 		}
 	})
+
+	watch(
+		() => props.graphAnimating,
+		(newVal) => {
+			if (!newVal) {
+				Array.from(props.pressedKeys).forEach((note) => {
+					emit("cellToggled", { note, isOn: false })
+					cy.value?.elements().removeClass("visited")
+				})
+			}
+		},
+	)
+
+	watch(
+		() => props.pressedKeys,
+		(newVal) => {
+			if (newVal.size === 0) {
+				cy.value?.elements().removeClass("visited")
+			}
+		},
+	)
+
+	// Add a watch for loop changes to reset state if needed
+	watch(
+		() => loop.value,
+		(newVal) => {
+			if (!newVal) {
+				cy.value?.elements().removeClass("visited")
+			}
+		},
+	)
 })
+
+// should be in a composable
+const createNoteFromId = (id: string): Note => {
+	return new Note(
+		{
+			midi: Tone.Frequency(id).toMidi(),
+			velocity: 0.8,
+			ticks: Tone.getTransport().ticks,
+		},
+		{
+			ticks: Tone.Time("4n").toTicks(),
+			velocity: 0.5,
+		},
+		new Header(),
+	)
+}
 </script>
 
 <style scoped>

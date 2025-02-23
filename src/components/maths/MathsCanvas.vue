@@ -34,6 +34,9 @@
         <div class="flex-1">
           <Graph 
             :graph-animating="isPlaying"
+            :pressed-keys="pressedKeys"
+            @cellToggled="cellToggled"
+            @gridUpdated="gridUpdated"
           />
 
         </div>
