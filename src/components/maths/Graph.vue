@@ -295,7 +295,7 @@ onMounted(() => {
 	if (!cy) return
 
 	let i = 0
-	const strategy = determineStrategy(cy.value)?.strategy
+	let strategy = determineStrategy(cy.value)?.strategy
 	const highlightNextEle = () => {
 		if (cy.value && props.graphAnimating && i < strategy.path.length) {
 			strategy.path[i].addClass("visited")
@@ -312,6 +312,24 @@ onMounted(() => {
 	watch(inDrawMode, () => {
 		if (inDrawMode.value) eh.enableDrawMode()
 		else eh.disableDrawMode()
+	})
+
+	cy?.value.on("dblclick", "node", (evt) => {
+		const node = evt.target
+		root.value = `#${node.id()}`
+
+		console.log("Setting root to", node.id())
+
+		cy.value?.elements().removeClass("visited")
+		cy.value?.elements().$id(root.value).addClass("visited")
+		node.addClass("visited")
+
+		i = 0
+
+		if (cy.value) {
+			const newStrategy = determineStrategy(cy.value)?.strategy
+			strategy = newStrategy
+		}
 	})
 })
 </script>
