@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Analytics } from "@vercel/analytics/vue"
 import Studio from "./components/Studio.vue"
 </script>
 
