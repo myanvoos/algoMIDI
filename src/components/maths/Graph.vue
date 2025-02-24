@@ -62,7 +62,7 @@ const searchStrategies = [
 ]
 const selectedSearch = ref(searchStrategies[0])
 const inDrawMode = ref(false)
-const root = ref("#C4")
+const root = ref("") // leave blank to allow user to opt-out of graph search
 const loop = ref(false)
 
 const layoutOptions = ref([
@@ -300,6 +300,11 @@ onMounted(() => {
 	})
 
 	const determineStrategy = (cy: cytoscape.Core) => {
+		if (!root.value) {
+			console.log("No root node selected yet")
+			return { strategy: null }
+		}
+
 		switch (selectedSearch.value.shorthand) {
 			case "dfs": {
 				console.log("Performing DFS...")
@@ -308,18 +313,15 @@ onMounted(() => {
 					visit: () => {},
 					directed: true,
 				})
-
 				return { strategy: dfs }
 			}
 			default: {
-				console.error("Not a valid search strategy! Defaulting to BFS...")
-
+				console.log("Performing BFS...")
 				const bfs = cy.elements().bfs({
 					roots: root.value,
-					visit: () => {}, // leave visit empty because we're using highlightNextEle instead - see example
+					visit: () => {},
 					directed: true,
 				})
-
 				return { strategy: bfs }
 			}
 		}
@@ -330,6 +332,8 @@ onMounted(() => {
 	let i = 0
 	let strategy = determineStrategy(cy.value)?.strategy
 	const highlightNextEle = () => {
+		if (!strategy) return
+
 		if (cy.value && props.graphAnimating && i < strategy.path.length) {
 			const element = strategy.path[i]
 			element.addClass("visited")
@@ -354,6 +358,7 @@ onMounted(() => {
 		() => highlightNextEle(),
 	)
 	watch(layout, () => {
+		console.log("Layout changed to", layout.value)
 		cy.value?.layout({ name: layout.value }).run()
 	})
 	watch(inDrawMode, () => {
@@ -402,6 +407,7 @@ onMounted(() => {
 		(newVal) => {
 			if (newVal.size === 0) {
 				cy.value?.elements().removeClass("visited")
+				i = 0
 			}
 		},
 	)
@@ -412,6 +418,7 @@ onMounted(() => {
 		(newVal) => {
 			if (!newVal) {
 				cy.value?.elements().removeClass("visited")
+				i = 0
 			}
 		},
 	)
