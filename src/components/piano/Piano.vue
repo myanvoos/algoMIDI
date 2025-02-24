@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Note } from "@tonejs/midi/dist/Note"
 import { Button } from "primevue"
-import { Ref } from "vue"
+import { Ref, computed } from "vue"
 import { useTrackState } from "../../composables/useTrackState"
 import { TrackData } from "../../services/db/types"
 import PianoKeys from "./PianoKeys.vue"
@@ -13,6 +13,10 @@ const props = defineProps<{
 }>()
 
 const { currentTrack } = useTrackState()
+
+const isAnyPlaying = computed(
+	() => props.isPlaying.ca.value || props.isPlaying.graph.value,
+)
 
 const endTrack = () => {
 	emit("endTrack", currentTrack.value)
@@ -39,25 +43,24 @@ const emit = defineEmits<{
         <Button
           @click="$emit('togglePlayPause')"
           class="play-button"
-          :label="props.isPlaying.ca.value && props.isPlaying.graph.value ? 'Pause' : 'Play'"
-          :icon="props.isPlaying.ca.value && props.isPlaying.graph.value ? 'pi pi-pause' : 'pi pi-play'"
-          
-      />
-      <Button
-        v-if="props.isPlaying.ca.value || props.isPlaying.graph.value"
-        @click="endTrack"
-        class="stop-button"
-        :label="'Stop'"
-        :icon="'pi pi-stop'"
-        rounded
-      />
-      <Button
-        @click="clearGrid"
-        class="clear-grid-button"
-        :label="'Clear'"
-        :icon="'pi pi-undo'"
-        rounded
-      />
+          :label="isAnyPlaying ? 'Pause' : 'Play'"
+          :icon="isAnyPlaying ? 'pi pi-pause' : 'pi pi-play'"
+        />
+        <Button
+          v-if="isAnyPlaying"
+          @click="endTrack"
+          class="stop-button"
+          label="Stop"
+          icon="pi pi-stop"
+          rounded
+        />
+        <Button
+          @click="clearGrid"
+          class="clear-grid-button"
+          label="Clear"
+          icon="pi pi-undo"
+          rounded
+        />
       </div>
       
     </div>

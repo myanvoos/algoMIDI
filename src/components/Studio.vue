@@ -79,10 +79,16 @@ const handleGridUpdated = (activeNotes: Set<Note>, source: string) => {
 }
 
 const handleGridIsClear = (source: string) => {
-	if (source === "ca") {
+	if (source === "ca" && !caPressedKeys?.value?.size) {
 		caHandleGridIsClear()
-	} else {
+		if (!graphPressedKeys?.value?.size) {
+			handleStop()
+		}
+	} else if (source === "graph" && !graphPressedKeys?.value?.size) {
 		graphHandleGridIsClear()
+		if (!caPressedKeys?.value?.size) {
+			handleStop()
+		}
 	}
 }
 
@@ -92,6 +98,13 @@ const handleClearGrid = () => {
 }
 
 const handleTogglePlayPause = () => {
+	if (
+		!caTransport.isPlaying &&
+		!caPressedKeys?.value?.size &&
+		!graphPressedKeys?.value?.size
+	) {
+		return
+	}
 	caTransport.togglePlayPause()
 	graphTransport.togglePlayPause()
 }

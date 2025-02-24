@@ -1,14 +1,5 @@
 <template>
   <Toolbar class="toolbar">
-    <template #center>
-      <Button 
-        label="Randomise Graph" 
-        icon="pi pi-refresh" 
-        @click="randomiseGraph"
-		icon-class="mr-1"
-        class="mx-2"
-      />
-    </template>
     <template #start>
       <span class="pi pi-sitemap mr-1"></span>
       <span class="text-white">Layout:</span>
@@ -28,6 +19,13 @@
       </select>
     </template>
     <template #end>
+		<Button 
+        label="Randomise" 
+        icon="pi pi-refresh" 
+        @click="randomiseGraph"
+		icon-class="mr-1"
+        class="mr-4"
+      />
       <Button 
         :icon="inDrawMode ? 'pi pi-pencil' : 'pi pi-eye'" 
         icon-class="mr-1" 
@@ -99,6 +97,7 @@ const emit = defineEmits<{
 		payload: { note: Note; isOn: boolean; source: string },
 	): void
 	(e: "gridUpdated", activeNotes: Set<Note>, source: string): void
+	(e: "gridIsClear", source: string): void
 }>()
 
 cytoscape.use(edgehandles)
@@ -363,6 +362,15 @@ onMounted(() => {
 			cy.value?.elements().removeClass("visited")
 			const timeInMs = 60000 / props.transport.bpm.value / 2
 			setTimeout(highlightNextEle, timeInMs)
+		} else if (i >= strategy.path.length) {
+			i = 0
+			if (!loop.value) {
+				emit("gridIsClear", "graph")
+				props.pressedKeys.clear()
+				cy.value?.elements().removeClass("visited")
+				root.value = ""
+				strategy = null
+			}
 		}
 	}
 

@@ -37,6 +37,7 @@
             :pressed-keys="pressedKeys.graph"
             @cellToggled="cellToggled"
             @gridUpdated="gridUpdated"
+            @gridIsClear="gridIsClear"
             :transport="transport.graph"
           />
 
