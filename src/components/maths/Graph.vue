@@ -390,12 +390,12 @@ onMounted(() => {
 
 	cy?.value.on("click", "node", (evt) => {
 		const node = evt.target
-		root.value = `#${node.id()}`
+		root.value = `#${node.id().replace("#", "\\#")}`
 
 		console.log("Setting root to", node.id())
 
 		cy.value?.elements().removeClass("visited")
-		cy.value?.elements().$id(root.value).addClass("visited")
+		cy.value?.elements().$id(root.value.substring(1)).addClass("visited")
 		node.addClass("visited")
 
 		// Emit selected root note
@@ -449,6 +449,7 @@ onMounted(() => {
 
 // should be in a composable
 const createNoteFromId = (id: string): Note => {
+	console.log("Creating note from id", id)
 	return new Note(
 		{
 			midi: Tone.Frequency(id).toMidi(),
