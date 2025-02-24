@@ -1,7 +1,13 @@
 <template>
   <Toolbar class="toolbar">
     <template #center>
-      
+      <Button 
+        label="Randomise Graph" 
+        icon="pi pi-refresh" 
+        @click="randomiseGraph"
+		icon-class="mr-1"
+        class="mx-2"
+      />
     </template>
     <template #start>
       <span class="pi pi-sitemap mr-1"></span>
@@ -45,6 +51,7 @@ import Button from "primevue/button"
 import * as Tone from "tone"
 import { TransportClass } from "tone/build/esm/core/clock/Transport"
 import { onMounted, ref, watch } from "vue"
+import { baseNotes } from "../../composables/useKeyboardGenerator"
 
 const cy = ref<cytoscape.Core | null>(null)
 
@@ -444,6 +451,48 @@ const createNoteFromId = (id: string): Note => {
 		},
 		new Header(),
 	)
+}
+
+const generateRandomGraph = () => {
+	const octaves = [4, 5]
+	const nodes: cytoscape.NodeDefinition[] = []
+	const edges: cytoscape.EdgeDefinition[] = []
+
+	octaves.forEach((octave) => {
+		baseNotes.forEach((note) => {
+			nodes.push({
+				data: { id: `${note}${octave}` },
+			})
+		})
+	})
+
+	nodes.forEach((node) => {
+		// generate 2-3 random connections for each node
+		const numConnections = 2 + Math.floor(Math.random() * 2)
+		for (let i = 0; i < numConnections; i++) {
+			const target = nodes[Math.floor(Math.random() * nodes.length)]
+			if (target.data.id !== node.data.id) {
+				edges.push({
+					data: {
+						id: `${node.data.id}-${target.data.id}`,
+						source: node.data.id || "",
+						target: target.data.id || "",
+					},
+				})
+			}
+		}
+	})
+
+	return { nodes, edges }
+}
+
+const randomiseGraph = () => {
+	if (!cy.value) return
+
+	const { nodes, edges } = generateRandomGraph()
+	cy.value.elements().remove()
+	cy.value.add([...nodes, ...edges])
+	cy.value.layout({ name: layout.value }).run()
 }
 </script>
 
