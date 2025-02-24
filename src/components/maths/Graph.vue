@@ -355,12 +355,14 @@ onMounted(() => {
 			}
 
 			i++
-			setTimeout(highlightNextEle, 200)
+			// Convert transport time to milliseconds
+			const timeInMs = 60000 / props.transport.bpm.value / 2 // Quarter note timing
+			setTimeout(highlightNextEle, timeInMs)
 		} else if (props.isPlaying && loop.value) {
-			// Reset for next loop
 			i = 0
 			cy.value?.elements().removeClass("visited")
-			setTimeout(highlightNextEle, 200)
+			const timeInMs = 60000 / props.transport.bpm.value / 2
+			setTimeout(highlightNextEle, timeInMs)
 		}
 	}
 

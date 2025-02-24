@@ -54,7 +54,12 @@ export const useAutomata = (config: AutomataConfig) => {
 
 			for (let col = 0; col < config.gridSize; col++) {
 				const noteName = scaleNotes[(row + col) % scaleNotes.length]
-				const octave = 3 + Math.floor((row + col) / scaleNotes.length)
+				const baseOctave = row % 2 === 0 ? 2 : 3
+				const octaveOffset = Math.min(
+					2,
+					Math.floor((row + col) / scaleNotes.length),
+				)
+				const octave = baseOctave + octaveOffset
 				const noteId = `${noteName}${octave}`
 
 				// velocity between 0.3 and 0.8 for more musical dynamics

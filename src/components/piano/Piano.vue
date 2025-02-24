@@ -39,8 +39,8 @@ const emit = defineEmits<{
         <Button
           @click="$emit('togglePlayPause')"
           class="play-button"
-          :label="props.isPlaying.ca.value || props.isPlaying.graph.value ? 'Pause' : 'Play'"
-          :icon="props.isPlaying.ca.value || props.isPlaying.graph.value ? 'pi pi-pause' : 'pi pi-play'"
+          :label="props.isPlaying.ca.value && props.isPlaying.graph.value ? 'Pause' : 'Play'"
+          :icon="props.isPlaying.ca.value && props.isPlaying.graph.value ? 'pi pi-pause' : 'pi pi-play'"
           
       />
       <Button
