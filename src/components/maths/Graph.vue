@@ -371,7 +371,7 @@ onMounted(() => {
 		else eh.disableDrawMode()
 	})
 
-	cy?.value.on("dblclick", "node", (evt) => {
+	cy?.value.on("click", "node", (evt) => {
 		const node = evt.target
 		root.value = `#${node.id()}`
 
