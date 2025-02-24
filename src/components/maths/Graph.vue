@@ -43,6 +43,7 @@ import edgehandles from "cytoscape-edgehandles"
 import { Toolbar } from "primevue"
 import Button from "primevue/button"
 import * as Tone from "tone"
+import { TransportClass } from "tone/build/esm/core/clock/Transport"
 import { onMounted, ref, watch } from "vue"
 
 const cy = ref<cytoscape.Core | null>(null)
@@ -80,13 +81,17 @@ const updateSearchStrategy = (value: string) => {
 }
 
 const props = defineProps<{
-	graphAnimating: boolean
+	isPlaying: boolean
 	pressedKeys: Set<Note>
+	transport: TransportClass
 }>()
 
 const emit = defineEmits<{
-	(e: "cellToggled", payload: { note: Note; isOn: boolean }): void
-	(e: "gridUpdated", activeNotes: Set<Note>): void
+	(
+		e: "cellToggled",
+		payload: { note: Note; isOn: boolean; source: string },
+	): void
+	(e: "gridUpdated", activeNotes: Set<Note>, source: string): void
 }>()
 
 cytoscape.use(edgehandles)
@@ -133,20 +138,20 @@ onMounted(() => {
 			{
 				selector: "node.visited",
 				style: {
-					"background-color": "#61bffc",
-					"line-color": "#61bffc",
-					"target-arrow-color": "#61bffc",
+					"background-color": "pink",
+					"line-color": "pink",
+					"target-arrow-color": "pink",
 					"transition-property":
 						"background-color, line-color, target-arrow-color",
-					"transition-duration": 0.5,
+					"transition-duration": 0,
 				},
 			},
 			{
 				selector: "edge.visited",
 				style: {
-					"line-color": "#61bffc",
-					color: "#61bffc",
-					"target-arrow-color": "#61bffc",
+					"line-color": "pink",
+					color: "pink",
+					"target-arrow-color": "pink",
 					"transition-property": "line-color, target-arrow-color",
 					"transition-duration": 0.5,
 				},
@@ -154,7 +159,7 @@ onMounted(() => {
 			{
 				selector: ".eh-handle",
 				style: {
-					"background-color": "lightskyblue",
+					"background-color": "lightpink",
 					width: 12,
 					height: 12,
 					shape: "ellipse",
@@ -175,8 +180,8 @@ onMounted(() => {
 				selector: ".eh-source",
 				style: {
 					"border-width": 2,
-					"border-color": "lightskyblue",
-					"background-color": "lightskyblue",
+					"border-color": "lightpink",
+					"background-color": "lightpink",
 				},
 			},
 
@@ -184,17 +189,17 @@ onMounted(() => {
 				selector: ".eh-target",
 				style: {
 					"border-width": 2,
-					"border-color": "lightskyblue",
+					"border-color": "lightpink",
 				},
 			},
 
 			{
 				selector: ".eh-preview, .eh-ghost-edge",
 				style: {
-					"background-color": "lightskyblue",
-					"line-color": "lightskyblue",
-					"target-arrow-color": "lightskyblue",
-					"source-arrow-color": "lightskyblue",
+					"background-color": "lightpink",
+					"line-color": "lightpink",
+					"target-arrow-color": "lightpink",
+					"source-arrow-color": "lightpink",
 				},
 			},
 
@@ -334,17 +339,17 @@ onMounted(() => {
 	const highlightNextEle = () => {
 		if (!strategy) return
 
-		if (cy.value && props.graphAnimating && i < strategy.path.length) {
+		if (cy.value && props.isPlaying && i < strategy.path.length) {
 			const element = strategy.path[i]
 			element.addClass("visited")
 
 			if (element.isNode()) {
-				emit("gridUpdated", new Set([createNoteFromId(element.id())]))
+				emit("gridUpdated", new Set([createNoteFromId(element.id())]), "graph")
 			}
 
 			i++
 			setTimeout(highlightNextEle, 200)
-		} else if (props.graphAnimating && loop.value) {
+		} else if (props.isPlaying && loop.value) {
 			// Reset for next loop
 			i = 0
 			cy.value?.elements().removeClass("visited")
@@ -354,7 +359,7 @@ onMounted(() => {
 
 	// kick off
 	watch(
-		() => props.graphAnimating,
+		() => props.isPlaying,
 		() => highlightNextEle(),
 	)
 	watch(layout, () => {
@@ -380,6 +385,7 @@ onMounted(() => {
 		emit("cellToggled", {
 			note: createNoteFromId(node.id()),
 			isOn: true,
+			source: "graph",
 		})
 
 		i = 0
@@ -391,11 +397,11 @@ onMounted(() => {
 	})
 
 	watch(
-		() => props.graphAnimating,
+		() => props.isPlaying,
 		(newVal) => {
 			if (!newVal) {
 				Array.from(props.pressedKeys).forEach((note) => {
-					emit("cellToggled", { note, isOn: false })
+					emit("cellToggled", { note, isOn: false, source: "graph" })
 					cy.value?.elements().removeClass("visited")
 				})
 			}
@@ -430,7 +436,7 @@ const createNoteFromId = (id: string): Note => {
 		{
 			midi: Tone.Frequency(id).toMidi(),
 			velocity: 0.8,
-			ticks: Tone.getTransport().ticks,
+			ticks: props.transport.toTicks(),
 		},
 		{
 			ticks: Tone.Time("4n").toTicks(),

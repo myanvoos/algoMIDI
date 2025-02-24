@@ -1,50 +1,109 @@
 <script setup lang="ts">
-import { Header, Track } from "@tonejs/midi"
-import * as Tone from "tone"
+import { Note } from "@tonejs/midi/dist/Note"
 import { computed, onMounted, ref, watch } from "vue"
+import { useMultiTransport } from "../composables/useMultiTransport"
 import { usePianoSampler } from "../composables/usePianoSampler"
 import { useTrackControl } from "../composables/useTrackControl"
 import { useTrackState } from "../composables/useTrackState"
-import { useTransport } from "../composables/useTransport"
-import { useMIDIStore } from "../stores/midiStore"
 import MathsCanvas from "./maths/MathsCanvas.vue"
 import Piano from "./piano/Piano.vue"
 import TrackView from "./tracks/TrackView.vue"
 
 const playbackTempo = ref(180)
 
-const { addTrack } = useMIDIStore()
 const { currentTrack, updateCurrentTrack } = useTrackState()
 const { sampler, samplerError, samplerLoaded } = usePianoSampler()
-const {
-	isPlaying,
-	transportError,
-	togglePlayPause,
-	initialiseTransport,
-	handleStop,
-} = useTransport({
+
+const caTransport = useMultiTransport("ca", {
 	playbackTempo: playbackTempo.value,
 	onStop: async () => {
-		console.log("Adding track: ", currentTrack.value.track)
-		await addTrack(currentTrack.value.track)
+		// console.log("Adding CA track: ", currentTrack.value.track)
+		// await addTrack(currentTrack.value.track)
 	},
 })
-const {
-	pressedKeys,
-	handleCellToggled,
-	handleGridUpdated,
-	handleGridIsClear,
-	handleClearGrid,
-} = useTrackControl({
-	sampler,
+const graphTransport = useMultiTransport("graph", {
+	playbackTempo: playbackTempo.value,
 	onStop: async () => {
-		console.log("Adding track: ", currentTrack.value.track)
-		await addTrack(currentTrack.value.track)
+		// console.log("Adding graph track: ", currentTrack.value.track)
+		// await addTrack(currentTrack.value.track)
 	},
 })
 
+const {
+	pressedKeys: caPressedKeys,
+	handleCellToggled: caHandleCellToggled,
+	handleGridUpdated: caHandleGridUpdated,
+	handleGridIsClear: caHandleGridIsClear,
+	handleClearGrid: caHandleClearGrid,
+} = useTrackControl("ca", {
+	sampler,
+	transport: caTransport.transport,
+	onStop: async () => {
+		// console.log("Adding CA track: ", currentTrack.value.track)
+		// await addTrack(currentTrack.value.track)
+	},
+})
+
+const {
+	pressedKeys: graphPressedKeys,
+	handleCellToggled: graphHandleCellToggled,
+	handleGridUpdated: graphHandleGridUpdated,
+	handleGridIsClear: graphHandleGridIsClear,
+	handleClearGrid: graphHandleClearGrid,
+} = useTrackControl("graph", {
+	sampler,
+	transport: graphTransport.transport,
+	onStop: async () => {
+		// console.log("Adding graph track: ", currentTrack.value.track)
+		// await addTrack(currentTrack.value.track)
+	},
+})
+const handleCellToggled = (payload: {
+	note: Note
+	isOn: boolean
+	source: string
+}) => {
+	if (payload.source === "ca") {
+		caHandleCellToggled(payload)
+	} else {
+		graphHandleCellToggled(payload)
+	}
+}
+
+const handleGridUpdated = (activeNotes: Set<Note>, source: string) => {
+	if (source === "ca") {
+		caHandleGridUpdated(activeNotes)
+	} else {
+		graphHandleGridUpdated(activeNotes)
+	}
+}
+
+const handleGridIsClear = (source: string) => {
+	if (source === "ca") {
+		caHandleGridIsClear()
+	} else {
+		graphHandleGridIsClear()
+	}
+}
+
+const handleClearGrid = () => {
+	caHandleClearGrid()
+	graphHandleClearGrid()
+}
+
+const handleTogglePlayPause = () => {
+	caTransport.togglePlayPause()
+	graphTransport.togglePlayPause()
+}
+
+const handleStop = () => {
+	caTransport.handleStop()
+	graphTransport.handleStop()
+}
+
 onMounted(() => {
-	initialiseTransport()
+	caTransport.initialiseTransport()
+	graphTransport.initialiseTransport()
 })
 
 const updatePlaybackTempo = (tempo: number) => {
@@ -55,9 +114,9 @@ const updatePlaybackTempo = (tempo: number) => {
 
 <template>
   <div class="studio-container">
-    <div v-if="samplerError || transportError" class="error-banner">
-      Error: {{ samplerError?.message || transportError?.message }}
-    </div>
+    <!-- <div v-if="samplerError || caTransport.transportError || graphTransport.transportError" class="error-banner">
+      Error: {{ samplerError || caTransport.transportError?.value?.message || graphTransport.transportError?.value?.message }}
+    </div> -->
     <div v-if="!samplerLoaded"  class="loading-banner">
       Loading sound samples...
     </div>
@@ -65,20 +124,21 @@ const updatePlaybackTempo = (tempo: number) => {
       <div class="piano-section">
         <div class="canvas-container">
           <MathsCanvas
-            :pressed-keys="pressedKeys"
+            :pressed-keys="{ ca: caPressedKeys, graph: graphPressedKeys }"
+            :is-playing="{ ca: caTransport.isPlaying, graph: graphTransport.isPlaying }"
+            :transport="{ ca: caTransport.transport, graph: graphTransport.transport }"
             @cellToggled="handleCellToggled"
             @gridUpdated="handleGridUpdated"
             @gridIsClear="handleGridIsClear"
             @update:playbackTempo="updatePlaybackTempo"
-            :is-playing="isPlaying"
             :playback-tempo="playbackTempo"
           />
         </div>
         <Piano
           :track="currentTrack"
-          :pressed-keys="pressedKeys"
-          :is-playing="isPlaying"
-          @toggle-play-pause="togglePlayPause"
+          :pressed-keys="{ ca: caPressedKeys, graph: graphPressedKeys }"
+          :is-playing="{ ca: caTransport.isPlaying, graph: graphTransport.isPlaying }"
+          @toggle-play-pause="handleTogglePlayPause"
           @end-track="handleStop"
           @clear-grid="handleClearGrid"
         />

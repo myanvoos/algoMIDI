@@ -15,7 +15,11 @@ interface AutomataRendererConfig {
 	automataConfig: Ref<AutomataConfig>
 	automataState: Ref<AutomataState>
 	callbacks: {
-		onCellToggled: (payload: { note: Note; isOn: boolean }) => void
+		onCellToggled: (payload: {
+			note: Note
+			isOn: boolean
+			source: string
+		}) => void
 		onGridUpdated: () => void
 		onGridIsClear: () => void
 	}
@@ -87,6 +91,7 @@ export const useAutomataRenderer = (config: AutomataRendererConfig) => {
 			config.callbacks.onCellToggled({
 				note: cell.note,
 				isOn: cell.isOn,
+				source: "ca",
 			})
 			p5.redraw()
 		}

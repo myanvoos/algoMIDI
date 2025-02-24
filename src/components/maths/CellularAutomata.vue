@@ -20,9 +20,12 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-	(e: "cellToggled", payload: { note: Note; isOn: boolean }): void
-	(e: "gridUpdated", activeNotes: Set<Note>): void
-	(e: "gridIsClear"): void
+	(
+		e: "cellToggled",
+		payload: { note: Note; isOn: boolean; source: string },
+	): void
+	(e: "gridUpdated", activeNotes: Set<Note>, source: string): void
+	(e: "gridIsClear", source: string): void
 }>()
 
 const automataConfig: Ref<AutomataConfig> = ref<AutomataConfig>({
@@ -75,16 +78,20 @@ const { drawGrid, handleMouseClick, updateGrid, clearGridDisplay } =
 		automataConfig: automataConfig,
 		automataState: automataState,
 		callbacks: {
-			onCellToggled: (payload: { note: Note; isOn: boolean }) => {
+			onCellToggled: (payload: {
+				note: Note
+				isOn: boolean
+				source: string
+			}) => {
 				emit("cellToggled", payload)
 			},
 			onGridUpdated: () => {
 				const activeNotes = updateAutomata()
-				if (activeNotes.size === 0) emit("gridIsClear")
-				emit("gridUpdated", activeNotes)
+				if (activeNotes.size === 0) emit("gridIsClear", "ca")
+				emit("gridUpdated", activeNotes, "ca")
 			},
 			onGridIsClear: () => {
-				emit("gridIsClear")
+				emit("gridIsClear", "ca")
 			},
 		},
 	})

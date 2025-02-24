@@ -6,51 +6,53 @@ interface TransportConfig {
 	onStop?: () => void
 }
 
-// singleton state
-const isPlaying = ref(false)
-const transportError = ref<Error | null>(null)
+export function useMultiTransport(id: string, config: TransportConfig = {}) {
+	const isPlaying = ref(false)
+	const transportError = ref<Error | null>(null)
+	// Create a dedicated transport instance
+	const transport = Tone.getTransport()
 
-export function useTransport(config: TransportConfig = {}) {
 	const togglePlayPause = async () => {
 		try {
 			if (isPlaying.value) {
-				Tone.getTransport().pause()
+				transport.pause()
 				isPlaying.value = false
 			} else {
 				await Tone.start()
-				Tone.getTransport().start()
+				transport.start()
 				isPlaying.value = true
 			}
 		} catch (err) {
 			transportError.value =
 				err instanceof Error ? err : new Error("Unknown error occurred")
-			console.error("Transport error:", transportError.value)
+			console.error(`Transport ${id} error:`, transportError.value)
 		}
 	}
 
 	const initialiseTransport = () => {
-		console.log("Initialising transport")
-		Tone.getTransport().stop()
-		Tone.getTransport().bpm.value = config.playbackTempo ?? 120
-		Tone.getTransport().start()
+		console.log(`Initialising transport ${id}`)
+		transport.stop()
+		transport.bpm.value = config.playbackTempo ?? 120
 	}
 
 	const cleanup = () => {
-		console.log("Cleaning up transport")
-		Tone.getTransport().stop()
-		Tone.getTransport().cancel()
+		console.log(`Cleaning up transport ${id}`)
+		transport.stop()
+		transport.cancel()
+		transport.dispose()
 	}
 
 	const handleStop = () => {
-		console.log("Handling stop")
+		console.log(`Handling stop for transport ${id}`)
 		config.onStop?.()
-		Tone.getTransport().stop()
+		transport.stop()
 		isPlaying.value = false
 	}
 
 	onUnmounted(cleanup)
 
 	return {
+		transport, // transport instance
 		isPlaying,
 		transportError,
 		togglePlayPause,

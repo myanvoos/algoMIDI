@@ -22,21 +22,22 @@
             </template> -->
           </Toolbar>
           <CellularAutomata
-            :pressed-keys="pressedKeys"
+            :pressed-keys="pressedKeys.ca"
             :playback-tempo="playbackTempo"
             :cellular-automata-rules="cellularAutomataRules"
             @cellToggled="cellToggled"
             @gridUpdated="gridUpdated"
             @gridIsClear="gridIsClear"
-            :is-playing="isPlaying"
+            :is-playing="isPlaying.ca.value"
           />
         </div>
         <div class="flex-1">
           <Graph 
-            :graph-animating="isPlaying"
-            :pressed-keys="pressedKeys"
+            :is-playing="isPlaying.graph.value"
+            :pressed-keys="pressedKeys.graph"
             @cellToggled="cellToggled"
             @gridUpdated="gridUpdated"
+            :transport="transport.graph"
           />
 
         </div>
@@ -48,7 +49,8 @@
 <script setup lang="ts">
 import { Note } from "@tonejs/midi/dist/Note"
 import { Button, Toolbar } from "primevue"
-import { ref } from "vue"
+import { TransportClass } from "tone/build/esm/core/clock/Transport"
+import { Ref, ref } from "vue"
 import CASettings from "./CASettings.vue"
 import CellularAutomata from "./CellularAutomata.vue"
 import Graph from "./Graph.vue"
@@ -57,15 +59,28 @@ const settingsOpen = ref(false)
 const cellularAutomataRules = ref("B3/S2,3")
 
 const props = defineProps<{
-	pressedKeys: Set<Note>
-	isPlaying: boolean
+	pressedKeys: {
+		ca: Set<Note>
+		graph: Set<Note>
+	}
+	isPlaying: {
+		ca: Ref<boolean>
+		graph: Ref<boolean>
+	}
+	transport: {
+		ca: TransportClass
+		graph: TransportClass
+	}
 	playbackTempo: number
 }>()
 
 const emit = defineEmits<{
-	(e: "cellToggled", payload: { note: Note; isOn: boolean }): void
-	(e: "gridUpdated", activeNotes: Set<Note>): void
-	(e: "gridIsClear"): void
+	(
+		e: "cellToggled",
+		payload: { note: Note; isOn: boolean; source: string },
+	): void
+	(e: "gridUpdated", activeNotes: Set<Note>, source: string): void
+	(e: "gridIsClear", source: string): void
 	(e: "update:playbackTempo", value: number): void
 }>()
 
@@ -77,16 +92,20 @@ const updatePlaybackTempo = (value: number) => {
 	emit("update:playbackTempo", value)
 }
 
-const cellToggled = (payload: { note: Note; isOn: boolean }) => {
+const cellToggled = (payload: {
+	note: Note
+	isOn: boolean
+	source: string
+}) => {
 	emit("cellToggled", payload)
 }
 
-const gridUpdated = (activeNotes: Set<Note>) => {
-	emit("gridUpdated", activeNotes)
+const gridUpdated = (activeNotes: Set<Note>, source: string) => {
+	emit("gridUpdated", activeNotes, source)
 }
 
-const gridIsClear = () => {
-	emit("gridIsClear")
+const gridIsClear = (source: string) => {
+	emit("gridIsClear", source)
 }
 </script>
 

@@ -4,8 +4,12 @@ import { computed } from "vue"
 import { generateFullKeyboard } from "../../composables/useKeyboardGenerator"
 
 const props = defineProps<{
-	pressedKeys: Set<Note>
+	pressedKeys: { ca: Set<Note>; graph: Set<Note> }
 }>()
+
+const aggregatedPressedKeys = computed(() => {
+	return new Set([...props.pressedKeys.ca, ...props.pressedKeys.graph])
+})
 
 const fullKeyboard = generateFullKeyboard()
 const whiteKeys = computed(() =>
@@ -16,13 +20,13 @@ const blackKeys = computed(() =>
 )
 
 const isNotePressed = (note: Note): boolean => {
-	return Array.from(props.pressedKeys).some(
+	return Array.from(aggregatedPressedKeys.value).some(
 		(pressedNote) => pressedNote.name === note.name,
 	)
 }
 
 const getPressedNote = (note: Note): Note | undefined => {
-	return Array.from(props.pressedKeys).find(
+	return Array.from(aggregatedPressedKeys.value).find(
 		(pressedNote) => pressedNote.name === note.name,
 	)
 }
@@ -56,6 +60,18 @@ const getKeyOpacity = (note: Note): number => {
 	const velocity = pressedNote?.velocity ?? note.velocity
 	return velocity * 0.8 + 0.2
 }
+
+const isNotePressedByCa = (note: Note): boolean => {
+	return Array.from(props.pressedKeys.ca).some(
+		(pressedNote) => pressedNote.name === note.name,
+	)
+}
+
+const isNotePressedByGraph = (note: Note): boolean => {
+	return Array.from(props.pressedKeys.graph).some(
+		(pressedNote) => pressedNote.name === note.name,
+	)
+}
 </script>
 
 <template>
@@ -63,7 +79,13 @@ const getKeyOpacity = (note: Note): number => {
     <div
         v-for="(note, index) in whiteKeys"
         :key="note.name + index"
-        :class="['white-key', isNotePressed(note) ? 'active' : '']"
+        :class="[
+          'white-key',
+          {
+            'active-ca': isNotePressedByCa(note),
+            'active-graph': isNotePressedByGraph(note)
+          }
+        ]"
         :style="{
           opacity: isNotePressed(note) ? getKeyOpacity(note) : 1
         }"
@@ -72,7 +94,13 @@ const getKeyOpacity = (note: Note): number => {
     <div
         v-for="(note, index) in blackKeys"
         :key="note.name + index"
-        :class="['black-key', isNotePressed(note) ? 'active' : '']"
+        :class="[
+          'black-key',
+          {
+            'active-ca': isNotePressedByCa(note),
+            'active-graph': isNotePressedByGraph(note)
+          }
+        ]"
         :style="{
           left: `${getBlackKeyPosition(index)}%`,
           opacity: isNotePressed(note) ? getKeyOpacity(note) : 1
@@ -101,13 +129,13 @@ const getKeyOpacity = (note: Note): number => {
   transition: all 0.1s;
 }
 
-.white-key.active {
+.white-key.active-ca {
   background-color: lightskyblue;
   transition: background-color 0.1s ease-in-out, opacity 0.1s ease-in-out;
 }
 
-.black-key.active {
-  background-color: lightblue;
+.white-key.active-graph {
+  background-color: lightpink;
   transition: background-color 0.1s ease-in-out, opacity 0.1s ease-in-out;
 }
 
@@ -120,5 +148,15 @@ const getKeyOpacity = (note: Note): number => {
   border-radius: 0 0 3px 3px;
   transition: all 0.1s;
   z-index: 2;
+}
+
+.black-key.active-ca {
+  background-color: lightblue;
+  transition: background-color 0.1s ease-in-out, opacity 0.1s ease-in-out;
+}
+
+.black-key.active-graph {
+  background-color: pink;
+  transition: background-color 0.1s ease-in-out, opacity 0.1s ease-in-out;
 }
 </style>

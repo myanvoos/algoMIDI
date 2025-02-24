@@ -1,29 +1,31 @@
 import { Header, Track } from "@tonejs/midi"
 import { Note } from "@tonejs/midi/dist/Note"
 import * as Tone from "tone"
-import { ref, watch } from "vue"
+import type { TransportClass } from "tone/build/esm/core/clock/Transport"
+import { nextTick, ref, watch } from "vue"
+import { useMultiTransport } from "./useMultiTransport"
 import { useTrackState } from "./useTrackState"
-import { useTransport } from "./useTransport"
 
 interface TrackControlConfig {
 	sampler: Tone.Sampler | null
 	onStop: () => void
+	transport?: TransportClass
 }
 
-export function useTrackControl(config: TrackControlConfig) {
+export function useTrackControl(id: string, config: TrackControlConfig) {
 	const { currentTrack } = useTrackState()
-	const { isPlaying } = useTransport()
+	const { isPlaying } = useMultiTransport(id)
 	const pressedKeys = ref<Set<Note>>(new Set())
 
 	watch(
 		pressedKeys,
 		(newPressedKeys) => {
-			if (!isPlaying.value) {
-				console.log("Not playing, returning")
+			if (newPressedKeys.size === 0) {
 				return
 			}
 
-			const currentTicks = Tone.getTransport().ticks
+			const transport = config.transport || Tone.getTransport()
+			const currentTicks = transport.ticks
 
 			currentTrack.value.track.notes = currentTrack.value.track.notes.filter(
 				(note) => note.ticks !== currentTicks,
@@ -70,6 +72,14 @@ export function useTrackControl(config: TrackControlConfig) {
 
 	const handleGridUpdated = (activeNotes: Set<Note>) => {
 		if (!config.sampler) return
+
+		const currentNotes = new Set(pressedKeys.value)
+		const hasChanged =
+			activeNotes.size !== currentNotes.size ||
+			Array.from(activeNotes).some((note) => !currentNotes.has(note))
+
+		if (!hasChanged) return
+
 		try {
 			activeNotes.forEach((note) => {
 				if (!config.sampler) return

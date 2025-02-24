@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { Note } from "@tonejs/midi/dist/Note"
 import { Button } from "primevue"
+import { Ref } from "vue"
 import { useTrackState } from "../../composables/useTrackState"
 import { TrackData } from "../../services/db/types"
 import PianoKeys from "./PianoKeys.vue"
 
 const props = defineProps<{
-	pressedKeys: Set<Note>
-	isPlaying: boolean
+	pressedKeys: { ca: Set<Note>; graph: Set<Note> }
+	isPlaying: { ca: Ref<boolean>; graph: Ref<boolean> }
 	track: TrackData | null
 }>()
 
@@ -38,12 +39,12 @@ const emit = defineEmits<{
         <Button
           @click="$emit('togglePlayPause')"
           class="play-button"
-          :label="isPlaying ? 'Pause' : 'Play'"
-          :icon="isPlaying ? 'pi pi-pause' : 'pi pi-play'"
+          :label="props.isPlaying.ca.value || props.isPlaying.graph.value ? 'Pause' : 'Play'"
+          :icon="props.isPlaying.ca.value || props.isPlaying.graph.value ? 'pi pi-pause' : 'pi pi-play'"
           
       />
       <Button
-        v-if="isPlaying"
+        v-if="props.isPlaying.ca.value || props.isPlaying.graph.value"
         @click="endTrack"
         class="stop-button"
         :label="'Stop'"
