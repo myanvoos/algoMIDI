@@ -1,6 +1,6 @@
 # AlgoMIDI 🎹
 
-[AlgoMIDI](https://raw.githubusercontent.com/myanvoos/algomMIDI/refs/heads/docs/public/algomidi.gif)
+![](public/algomidi.gif)
 
 A musical studio to create music through cellular automata and graph traversal algorithms. Built as a spiritual successor to [Cellular Minimata](https://github.com/myanvoos/cellular-minimata) - now instead of simply visualising the automata, each "living" cell triggers a musical note.
 
