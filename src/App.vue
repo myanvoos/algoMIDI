@@ -6,7 +6,7 @@ import Studio from "./components/Studio.vue"
 <template>
   <div>
     <Studio />
-
+    <Analytics />
   </div>
 </template>
 
