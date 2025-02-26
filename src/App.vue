@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { Analytics } from "@vercel/analytics/vue"
+import { inject } from "@vercel/analytics"
 import Studio from "./components/Studio.vue"
 </script>
 
 <template>
   <div>
     <Studio />
-    <Analytics />
   </div>
 </template>
 
