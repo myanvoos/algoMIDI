@@ -1,20 +1,33 @@
 <template>
   <Card class="ca-settings">
+    <template #header>
+      <div class="settings-header">
+        <h3 class="settings-title">Settings</h3>
+        <Button 
+          icon="pi pi-times" 
+          class="close-button"
+          @click="$emit('close')" 
+        />
+      </div>
+    </template>
     <template #content>
       <div class="settings-content">
         <div class="section">
           <h4 class="section-title">Tempo</h4>
-          <select
-            :value="props.playbackTempo"
-            @change="(e) => updatePlaybackTempo(Number((e.target as HTMLSelectElement).value))"
-            class="w-full p-2 rounded-md bg-[#f0f0f0] border border-gray-300 text-black"
-          >
-            <option value="60">60</option>
-            <option value="120">120</option>
-            <option value="180">180</option>
-            <option value="240">240</option>
-          </select>
+          <div class="tempo-selector">
+            <select
+              :value="props.playbackTempo"
+              @change="(e) => updatePlaybackTempo(Number((e.target as HTMLSelectElement).value))"
+              class="tempo-select"
+            >
+              <option value="60">60 BPM</option>
+              <option value="120">120 BPM</option>
+              <option value="180">180 BPM</option>
+              <option value="240">240 BPM</option>
+            </select>
+          </div>
         </div>
+
         <div class="section">
           <h4 class="section-title">Preset Layouts</h4>
           <div class="preset-grid">
@@ -35,16 +48,14 @@
           <Textarea
             :model-value="props.cellularAutomataRules"
             @update:model-value="updateCustomRules"
-            rows="4"
+            rows="3"
             placeholder="Enter your custom rules here..."
-            class="w-full"
-            style="outline: 1px solid whitesmoke; border-radius: 10px; padding: 10px;"
+            class="custom-rules-input"
           />
           <small class="helper-text">
-            Enter rules in the format: B3/S2,3 (Born with 3 neighbors, Survives with 2 or 3 neighbors)
+            Format: B3/S2,3 (Born with 3 neighbors, Survives with 2 or 3 neighbors)
           </small>
         </div>
-
       </div>
     </template>
   </Card>
@@ -97,61 +108,61 @@ const updatePlaybackTempo = (value: number) => {
 
 <style scoped>
 .ca-settings {
-  width: 350px;
-  margin-right: 10px;
-  background-color: var(--surface-card);
-  border-radius: 8px;
-  padding: 20px;
-  border: 1px solid whitesmoke;
+  @apply w-[90vw] max-h-[90vh] overflow-y-auto bg-[#213547] border border-white rounded-md;
+  @apply md:w-[350px] md:max-h-none;
 }
 
 .settings-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  @apply flex items-center justify-between p-4 border-b border-white;
+}
+
+.settings-title {
+  @apply text-lg font-semibold m-0;
+}
+
+.close-button {
+  @apply p-2 rounded-full hover:bg-white/10;
 }
 
 .settings-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  @apply flex flex-col gap-6 p-4;
 }
 
 .section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+  @apply flex flex-col gap-3;
 }
 
 .section-title {
-  margin: 0;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--primary-color);
+  @apply text-base font-medium m-0;
+}
+
+.tempo-selector {
+  @apply w-full;
+}
+
+.tempo-select {
+  @apply w-full p-2 rounded-md bg-white text-black;
 }
 
 .preset-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.5rem;
+  @apply grid grid-cols-2 gap-2;
 }
 
 .preset-button {
-  width: 100%;
-  outline: 1px solid whitesmoke;
-  border-radius: 10px;
-  transition: all 0.1s ease-in-out;
+  @apply w-full p-2 text-sm rounded-3xl border border-white transition-all;
+  @apply hover:bg-white/10;
 }
 
 .preset-button.selected {
-  background-color: lightskyblue !important;
-  color: #213547 !important;
-  outline: 1px solid #213547 !important;
+  @apply bg-sky-300 text-black;
+}
+
+.custom-rules-input {
+  @apply w-full p-2 rounded-md bg-white text-black;
+  @apply focus:border-sky-300 focus:ring-1 focus:ring-sky-300;
 }
 
 .helper-text {
-  color: var(--text-color-secondary);
-  font-style: italic;
+  @apply text-sm text-white italic;
 }
-
 </style>

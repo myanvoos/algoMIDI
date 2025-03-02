@@ -205,7 +205,7 @@ const updatePlaybackTempo = (tempo: number) => {
 }
 
 .github-link {
-  @apply text-gray-100 flex items-center gap-2;
+  @apply text-gray-100 flex items-center gap-2 mb-5 md:mb-0;
 }
 
 </style>

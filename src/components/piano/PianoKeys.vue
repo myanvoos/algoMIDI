@@ -113,11 +113,17 @@ const isNotePressedByGraph = (note: Note): boolean => {
 .piano {
   position: relative;
   display: flex;
-  width: 1100px;
-  height: 200px;
+  width: 100%;
+  min-width: 320px;
+  height: 120px;
   background-color: #fff;
   border: 1px solid #213547;
   box-sizing: border-box;
+  
+  @media (min-width: 768px) {
+    width: 1100px;
+    height: 200px;
+  }
 }
 
 .white-key {
@@ -141,13 +147,17 @@ const isNotePressedByGraph = (note: Note): boolean => {
 
 .black-key {
   position: absolute;
-  width: 1.65%;
+  width: 2.5%;
   height: 60%;
   background-color: #213547;
   border: 1px solid #213547;
   border-radius: 0 0 3px 3px;
   transition: all 0.1s;
   z-index: 2;
+
+  @media (min-width: 768px) {
+    width: 1.65%;
+  }
 }
 
 .black-key.active-ca {

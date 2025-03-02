@@ -1,21 +1,36 @@
 <template>
   <div class="maths-canvas-container">
-    <div class="settings-wrapper">
+    <div class="settings-wrapper" :class="{ 'settings-open': settingsOpen }">
       <CASettings 
         v-if="settingsOpen" 
         :cellular-automata-rules="cellularAutomataRules"
         :playback-tempo="playbackTempo"
         @update:cellular-automata-rules="updateCellularAutomataRules" 
         @update:playback-tempo="updatePlaybackTempo"
+        @close="settingsOpen = false"
       />
     </div>
     <div class="canvas-wrapper">
       <div class="canvas-content">
         <div class="cellular-automata-section">
           <Toolbar class="toolbar">
-            <template #start>
-              <Button label="Settings" icon-class="mr-1" icon="pi pi-sliders-h" @click="settingsOpen = !settingsOpen" />
-              <p class="ml-2">({{ cellularAutomataRules }})</p>
+            <template #start v-if="width >= 768">
+              <Button 
+                label="Settings" 
+                icon="pi pi-sliders-h" 
+                @click="settingsOpen = !settingsOpen"
+                class="settings-button" 
+              />
+              <p class="rules-display">({{ cellularAutomataRules }})</p>
+            </template>
+            <template #center v-else>
+              <Button 
+                label="Settings" 
+                icon="pi pi-sliders-h" 
+                @click="settingsOpen = !settingsOpen"
+                class="settings-button" 
+              />
+              <p class="rules-display">({{ cellularAutomataRules }})</p>
             </template>
             <!-- <template #end>
               <Button label="Layout" icon-class="mr-1" icon="pi pi-th-large"  />
@@ -115,11 +130,28 @@ const gridIsClear = (source: string) => {
 
 <style scoped>
 .maths-canvas-container {
-  @apply w-[70vw] h-[50vh] flex items-center justify-center;
+  @apply w-full h-full flex items-center justify-center relative;
+  @apply md:w-[70vw] md:h-[50vh];
 }
 
 .settings-wrapper {
-  @apply z-10;
+  @apply fixed inset-0 z-50 bg-black/50 flex items-center justify-center;
+  @apply md:absolute md:inset-auto md:right-0 md:top-0 md:bg-transparent;
+  display: none;
+}
+
+.settings-wrapper.settings-open {
+  display: flex;
+}
+
+.settings-button {
+  @apply text-sm;
+  @apply md:text-base;
+}
+
+.rules-display {
+  @apply ml-2 text-xs truncate max-w-[120px];
+  @apply md:text-sm md:max-w-none;
 }
 
 .canvas-wrapper {
@@ -127,11 +159,13 @@ const gridIsClear = (source: string) => {
 }
 
 .canvas-content {
-  @apply flex w-full h-full gap-8;
+  @apply flex flex-col w-full h-full gap-4;
+  @apply md:flex-row md:gap-8;
 }
 
 .cellular-automata-section {
-  @apply flex flex-col w-[520px] flex-shrink-0 items-center justify-center;
+  @apply flex flex-col w-full flex-shrink-0 items-center justify-center;
+  @apply md:w-[520px];
 }
 
 .toolbar {

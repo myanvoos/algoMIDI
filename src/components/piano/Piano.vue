@@ -39,7 +39,7 @@ const emit = defineEmits<{
       <PianoKeys
           :pressed-keys="props.pressedKeys"
       />
-      <div class="flex justify-center items-center space-x-4">
+      <div class="controls">
         <Button
           @click="$emit('togglePlayPause')"
           class="play-button"
@@ -69,11 +69,19 @@ const emit = defineEmits<{
 
 <style scoped>
 .piano-container {
-  @apply flex items-center justify-center
+  @apply flex items-center justify-center w-full overflow-x-auto;
 }
+
 .piano-wrapper {
-  @apply rounded-lg shadow-xl p-6 w-fit
+  @apply rounded-lg shadow-xl p-2 w-full;
+  @apply md:p-6 md:w-fit;
 }
+
+.controls {
+  @apply flex justify-center items-center gap-2;
+  @apply md:gap-4;
+}
+
 .play-button {
   @apply mt-4 bg-slate-500 text-white px-4 py-2 rounded
   hover:bg-sky-600 transition-colors disabled:opacity-50 space-x-2;
