@@ -121,7 +121,7 @@ const isNotePressedByGraph = (note: Note): boolean => {
   box-sizing: border-box;
   
   @media (min-width: 768px) {
-    width: 800px;
+    width: 1100px;
     height: 200px;
   }
 }
