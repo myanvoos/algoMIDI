@@ -69,7 +69,7 @@ const emit = defineEmits<{
 
 <style scoped>
 .piano-container {
-  @apply flex items-center justify-center w-full overflow-x-auto;
+  @apply flex items-center justify-center w-full;
 }
 
 .piano-wrapper {

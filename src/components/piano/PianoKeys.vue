@@ -114,14 +114,14 @@ const isNotePressedByGraph = (note: Note): boolean => {
   position: relative;
   display: flex;
   width: 100%;
-  min-width: 320px;
+  min-width: 0;
   height: 120px;
   background-color: #fff;
   border: 1px solid #213547;
   box-sizing: border-box;
   
   @media (min-width: 768px) {
-    width: 1100px;
+    width: 800px;
     height: 200px;
   }
 }
