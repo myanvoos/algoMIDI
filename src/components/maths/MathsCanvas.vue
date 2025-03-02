@@ -31,7 +31,7 @@
             :is-playing="isPlaying.ca.value"
           />
         </div>
-        <div class="flex-1">
+        <div class="flex-1" v-if="width >= 1260">
           <Graph 
             :is-playing="isPlaying.graph.value"
             :pressed-keys="pressedKeys.graph"
@@ -49,6 +49,7 @@
 
 <script setup lang="ts">
 import { Note } from "@tonejs/midi/dist/Note"
+import { useWindowSize } from "@vueuse/core"
 import { Button, Toolbar } from "primevue"
 import { TransportClass } from "tone/build/esm/core/clock/Transport"
 import { Ref, ref } from "vue"
@@ -58,6 +59,7 @@ import Graph from "./Graph.vue"
 
 const settingsOpen = ref(false)
 const cellularAutomataRules = ref("B3/S2,3")
+const { width } = useWindowSize()
 
 const props = defineProps<{
 	pressedKeys: {

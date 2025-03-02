@@ -15,6 +15,7 @@
 		"@tonejs/midi": "^2.0.28",
 		"@types/cytoscape": "^3.21.9",
 		"@vercel/analytics": "^1.5.0",
+		"@vueuse/core": "^12.7.0",
 		"cytoscape": "^3.31.0",
 		"cytoscape-edgehandles": "^4.0.1",
 		"idb": "^8.0.1",
